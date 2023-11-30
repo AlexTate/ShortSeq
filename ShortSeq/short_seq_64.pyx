@@ -24,7 +24,7 @@ Consider if length was encoded into the lower 6 bits (representing up to 63):
 """
 
 cdef class ShortSeq64:
-    # Todo: are property accessors still necessary?
+    # Todo: decide whether to standardize or remove (esp. setter...)
 
     @property
     def _length(self) -> uint8_t:
@@ -49,9 +49,6 @@ cdef class ShortSeq64:
         if type(other) is ShortSeq64:
             return self._length == (<ShortSeq64>other)._length and \
                    self._packed == (<ShortSeq64>other)._packed
-        elif type(other) is ShortSeq128:
-            return self._length == (<ShortSeq128>other)._length and \
-                   self._packed == (<ShortSeq128>other)._packed
         else:
             return False
 

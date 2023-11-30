@@ -1,16 +1,17 @@
 import cython
 
 from cpython.bytes cimport PyBytes_AsString
-from cpython.unicode cimport PyUnicode_AsASCIIString
-from cpython.number cimport PyNumber_Add
-from cpython.long cimport PyLong_FromSize_t
-from cpython.list cimport PyList_GET_ITEM
+from cpython.dict cimport PyDict_GetItem, PyDict_SetItem
 from cpython.exc cimport PyErr_Occurred
+from cpython.list cimport PyList_GET_ITEM
+from cpython.long cimport PyLong_FromSize_t
+from cpython.unicode cimport PyUnicode_AsASCIIString
 
 from libcpp.typeinfo cimport type_info
 from libcpp.vector cimport vector
 
 from .short_seq_util cimport *
+from .short_seq_var cimport *
 from .short_seq_128 cimport *
 from .short_seq_64 cimport *
 from .fast_read cimport *
@@ -43,7 +44,7 @@ cdef class ShortSeq:
     cdef inline object _from_chars(char* sequence)
 
     @staticmethod
-    cdef inline object _new(char* sequence, uint8_t length)
+    cdef inline object _new(char* sequence, size_t length)
 
 
 cdef class ShortSeqCounter(dict):

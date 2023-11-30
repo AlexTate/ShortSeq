@@ -1,18 +1,40 @@
 import unittest
-import os
-import time
+import numpy as np
 import psutil
+import random
+import math
+import time
+import os
 
-from collections import Counter
+from collections import Counter, defaultdict
 from random import randint
 from pympler.asizeof import asizeof
 
-from ShortSeq import ShortSeqCounter, read_and_count_fastq, ShortSeq, ShortSeq64, ShortSeq128
+from ShortSeq import ShortSeqCounter, read_and_count_fastq, ShortSeq, ShortSeq64, ShortSeq128, ShortSeqVar
 
 resources = "./testdata"
 
 
-class ShortSeq64Tests(unittest.TestCase):
+def print_var_seq_pext_chunks(seq):
+    block_count = math.ceil(len(seq) / 32)
+    blocks = [seq[i*32:(i+1)*32] for i in range(block_count)]
+    out = []
+
+    for block in blocks:
+        np64, rem = divmod(len(block), 8)
+        np32, ser = divmod(rem, 4)
+        chunks = []
+
+        if np64: chunks.extend(block[i*8:(i+1)*8] for i in range(np64))
+        if np32: chunks.append(block[np64*8:np64*8+4])
+        if ser: chunks.append(block[-1 * ser:])
+
+        out.append("|".join(chunks))
+
+    print(" -> ".join(out))
+
+
+class ShortSeqFixedWidthTests(unittest.TestCase):
     def test_empty_seq(self):
         seq_u = ShortSeq.from_str("")
         seq_b = ShortSeq.from_bytes(b"")
@@ -41,12 +63,12 @@ class ShortSeq64Tests(unittest.TestCase):
         self.assertIsInstance(seq_33, ShortSeq128)
 
     def test_max_length_exceeded(self):
-        max_seq = "ATGC" * 16  # 64 bases, the maximum allowed
+        max_seq = "ATGC" * 256  # 1024 bases, the maximum allowed
         exc_seq = max_seq + "A"
         no_problem = ShortSeq.from_str(max_seq)
         self.assertEqual(str(no_problem), max_seq)
 
-        with self.assertRaisesRegex(Exception, r"(.*)longer than 64 bases(.*)"):
+        with self.assertRaisesRegex(Exception, r"(.*)longer than 1024 bases(.*)"):
             ShortSeq.from_str(exc_seq)
 
     def test_incompatible_seq_chars(self):
@@ -56,6 +78,36 @@ class ShortSeq64Tests(unittest.TestCase):
         for prob in problems_64 + problems_128:
             with self.assertRaisesRegex(Exception, "Unsupported base character"):
                 ShortSeq.from_str(prob)
+
+
+class ShortSeqVarTests(unittest.TestCase):
+    """These tests are for the ShortSeqVar class."""
+
+
+    def test_min_length(self):
+        sample_len = 65
+        n_samples = 3
+
+        for _ in range(n_samples):
+            sample = ''.join(np.random.choice(["A", "C", "T", "G"]) for _ in range(sample_len))
+            sq = ShortSeq.from_str(sample)
+
+            self.assertIsInstance(sq, ShortSeqVar)
+            self.assertEqual(len(sq), len(sample))
+            self.assertEqual(str(sq), sample)
+
+    def test_length_range(self):
+        # TODO: make importable constants
+        min_len, max_len = 65, 1024
+
+        for length in range(min_len, max_len):
+            sample = ''.join(np.random.choice(["A", "C", "T", "G"]) for _ in range(length))
+            sq = ShortSeq.from_str(sample)
+
+            self.assertIsInstance(sq, ShortSeqVar)
+            self.assertEqual(len(sq), len(sample))
+            self.assertEqual(str(sq), sample)
+
 
 
 # For now, you must first generate these files using the make_data() helper function.

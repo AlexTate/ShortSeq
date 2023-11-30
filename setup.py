@@ -15,12 +15,16 @@ VERSION = '0.1'
 short_seq_common_compile_args = [
     '-stdlib=libc++',
     '-std=c++20',
-    "-Ofast",
+    "-O3",
     '-march=native']
 
 extensions = [
     Extension("ShortSeq.short_seq",
               sources=['ShortSeq/short_seq.pyx'],
+              extra_compile_args=short_seq_common_compile_args,
+              language='c++'),
+    Extension("ShortSeq.short_seq_var",
+              sources=['ShortSeq/short_seq_var.pyx'],
               extra_compile_args=short_seq_common_compile_args,
               language='c++'),
     Extension("ShortSeq.short_seq_128",

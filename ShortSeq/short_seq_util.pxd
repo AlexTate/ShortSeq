@@ -1,4 +1,5 @@
 from libc.stdint cimport uint8_t, uint32_t, uint64_t
+from libc.stddef cimport size_t
 from libc.string cimport strlen
 from libcpp.cast cimport reinterpret_cast
 
@@ -6,8 +7,6 @@ from cpython.object cimport Py_SIZE, PyObject
 from cpython.ref cimport Py_XDECREF, Py_XINCREF
 from cpython.unicode cimport PyUnicode_DecodeASCII
 
-from .short_seq_64 cimport ShortSeq64
-from .short_seq_128 cimport ShortSeq128
 
 # Constants
 cdef uint8_t mask
@@ -42,8 +41,8 @@ ctypedef struct PyBytesObject:
 For vectorized operations. 
 """
 cdef extern from "x86intrin.h" nogil:
-    uint64_t _pext_u64(uint64_t __X, uint64_t __Y)
-    uint32_t _pext_u32(uint32_t __X, uint32_t __Y)
+    uint64_t _pext_u64 (uint64_t __X, uint64_t __Y)
+    uint32_t _pext_u32 (uint32_t __X, uint32_t __Y)
 
 """
 A little bit of hackery to allow fast access to the packed hash field of both
@@ -82,3 +81,11 @@ This is a temporary fix until I find a better solution
 
 cdef inline bint is_base(uint8_t char) nogil:
     return bloom & (1 << (char & 63)) == 0
+
+cdef inline bint is_array_equal(uint64_t* a, uint64_t* b, size_t length) nogil:
+    cdef size_t i
+
+    for i in range(length):
+        if a[i] != b[i]: return False
+
+    return True

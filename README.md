@@ -28,3 +28,6 @@ The time it takes to convert a list of Python bytes objects (each representing t
 
 ### Decoding
 The original ASCII form of each ShortSeq is decoded "lazily", i.e. it happens only when asked and the result isn't cached in the object, so it must be recomputed with each request. However, ShortSeqs still retain the original string's length and their ability to be compared for equality. The packed integer form of each sequence additionally acts as its pre-computed hash value. These two properties make ShortSeqs ideal for use in datastructures like sets and dictionaries, making them useful for efficiently gathering statistics involving very large volumes of short sequences.
+
+### Longer Sequences, Featuring SIMD Encoding
+Longer sequences (65 - 1024 bases) are now experimentally supported. The encoding phase uses SIMD instructions to convert 8 bases at a time for much higher throughput. Most Intel CPUs 2014 and newer, and AMD CPUs 2020 and newer support these instructions (BMI2). 

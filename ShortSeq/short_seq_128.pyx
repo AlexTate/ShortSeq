@@ -32,10 +32,7 @@ cdef class ShortSeq128:
         return self._length
 
     def __eq__(self, other):
-        if type(other) is ShortSeq64:
-            return self._length == (<ShortSeq64> other)._length and \
-                   self._packed == (<ShortSeq64> other)._packed
-        elif type(other) is ShortSeq128:
+        if type(other) is ShortSeq128:
             return self._length == (<ShortSeq128> other)._length and \
                    self._packed == (<ShortSeq128> other)._packed
         else:

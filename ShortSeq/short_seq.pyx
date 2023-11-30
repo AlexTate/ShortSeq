@@ -39,31 +39,38 @@ cdef class ShortSeq:
     @staticmethod
     cdef object _from_py_bytes(bytes seq_bytes):
         cdef char* sequence = PyBytes_AsString(seq_bytes)   # deref(<PyBytesObject *> seq_bytes).ob_sval
-        cdef uint8_t length = Py_SIZE(seq_bytes)            # Note: already called PyBytes_Check() on prev line
+        cdef size_t length = Py_SIZE(seq_bytes)             # Note: already called PyBytes_Check() on prev line
         return ShortSeq._new(sequence, length)
 
     @staticmethod
     cdef inline object _from_chars(char* sequence):
-        cdef uint8_t length = strlen(sequence) - 1  # sequence is expected to include a trailing newline character
+        cdef size_t length = strlen(sequence) - 1           # sequence is expected to include a trailing newline character
         return ShortSeq._new(sequence, length)
 
     @staticmethod
-    cdef inline object _new(char* sequence, uint8_t length):
+    cdef inline object _new(char* sequence, size_t length):
         if length == 0:
             return empty
         elif length <= 32:
             out64 = ShortSeq64.__new__(ShortSeq64)
+            length = <uint8_t> length
             (<ShortSeq64> out64)._packed = _marshall_bytes_64(<uint8_t *> sequence, length)
             (<ShortSeq64> out64)._length = length
             return out64
         elif length <= 64:
             out128 = ShortSeq128.__new__(ShortSeq128)
+            length = <uint8_t> length
             (<ShortSeq128> out128)._packed = _marshall_bytes_128(<uint8_t *> sequence, length)
             (<ShortSeq128> out128)._length = length
             return out128
+        elif length <= 1024:
+            outvar = ShortSeqVar.__new__(ShortSeqVar)
+            (<ShortSeqVar> outvar)._packed = _marshall_bytes_var(<uint8_t *> sequence, length)
+            (<ShortSeqVar> outvar)._length = length
+            return outvar
         else:
-            # outvar = ShortSeqVar.__new__(ShortSeqVar)
-            raise Exception("Sequences longer than 64 bases are not supported.")
+            raise Exception("Sequences longer than 1024 bases are not supported.")
+
 
 cdef class ShortSeqCounter(dict):
     def __init__(self, source=None):
@@ -72,9 +79,10 @@ cdef class ShortSeqCounter(dict):
         if type(source) is list:
             self._count_py_bytes_list(source)
 
-    # todo: enforce key type here
-    # def __getitem__(self, item):
-    # def __setitem__(self, item):
+    def __setitem__(self, key, val):
+        if type(key) not in (ShortSeq64, ShortSeq128, ShortSeqVar):
+            raise TypeError(f"{self.__class__} does not support {type(key)} keys")
+        PyDict_SetItem(self, key, val)
 
     @cython.boundscheck(False)
     cdef _count_py_bytes_list(self, list it):
