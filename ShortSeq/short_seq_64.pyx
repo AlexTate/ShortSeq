@@ -62,7 +62,7 @@ cdef class ShortSeq64:
 @cython.cdivision(True)
 @cython.boundscheck(False)
 cdef inline uint64_t _marshall_bytes_64(uint8_t* sequence, uint8_t length) nogil:
-    cdef uint64_t hashed = 0L
+    cdef uint64_t hashed = 0LL
     cdef uint8_t seq_char
     cdef uint8_t i
 

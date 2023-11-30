@@ -14,8 +14,12 @@ from ShortSeq import ShortSeqCounter, read_and_count_fastq, ShortSeq, ShortSeq64
 
 resources = "./testdata"
 
+# === HELPER FUNCTIONS ================================================================================
 
 def print_var_seq_pext_chunks(seq):
+    """Prints the specified sequence with the block and pext boundaries of ShortSeqVar indicated.
+    This is useful for visualizing and debugging the ShortSeqVar marshalling algorithm."""
+
     block_count = math.ceil(len(seq) / 32)
     blocks = [seq[i*32:(i+1)*32] for i in range(block_count)]
     out = []
@@ -34,7 +38,31 @@ def print_var_seq_pext_chunks(seq):
     print(" -> ".join(out))
 
 
+def rand_sequence(min_length=None, max_length=None, no_range=False, as_bytes=False):
+    """Returns a randomly generated sequence of the specified type, with a length in the specified range"""
+
+    assert (min_length, max_length) != (None, None)
+
+    if no_range:
+        max_length = min_length
+        min_length = 0
+    if min_length is None:
+        min_length = max_length
+    if max_length is None:
+        max_length = min_length
+
+    seq = ''.join(np.random.choice(["A", "C", "T", "G"]) for _ in range(min_length, max_length))
+    return seq.encode() if as_bytes else seq
+
+
+# === TESTS ===========================================================================================
+
 class ShortSeqFixedWidthTests(unittest.TestCase):
+    """These tests address the fixed-width ShortSeq variants (ShortSeq64 and ShortSeq128)"""
+
+
+    """Can ShortSeqs represent zero-length sequences? Are they singleton?"""
+
     def test_empty_seq(self):
         seq_u = ShortSeq.from_str("")
         seq_b = ShortSeq.from_bytes(b"")
@@ -44,16 +72,23 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
         self.assertEqual(str(seq_b), "")
         self.assertEqual(str(seq_u), "")
 
+    """Can ShortSeqs encode and decode all valid bases from str object inputs?"""
+
     def test_single_base_str(self):
         bases = [ShortSeq.from_str(b) for b in "ATGC"]
         self.assertTrue(all(type(b) is ShortSeq64 for b in bases))
         self.assertListEqual([str(b) for b in bases], list("ATGC"))
-        
+
+    """Can ShortSeqs encode and decode all valid bases from bytes object inputs?"""
+
     def test_single_base_bytes(self):
         to_bytes = lambda x: x.encode()
         bases = [ShortSeq.from_bytes(to_bytes(b)) for b in "ATGC"]
         self.assertTrue(all(type(b) is ShortSeq64 for b in bases))
         self.assertListEqual([str(b) for b in bases], list("ATGC"))
+
+    """Does ShortSeq correctly transition to a larger representative object
+    when sequence length crosses the 32 base threshold?"""
 
     def test_correct_subtype_for_length(self):
         seq_32 = ShortSeq.from_str("A" * 32)
@@ -61,6 +96,8 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
 
         self.assertIsInstance(seq_32, ShortSeq64)
         self.assertIsInstance(seq_33, ShortSeq128)
+
+    """Is maximum sequence length correctly enforced?"""
 
     def test_max_length_exceeded(self):
         max_seq = "ATGC" * 256  # 1024 bases, the maximum allowed
@@ -70,6 +107,8 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
 
         with self.assertRaisesRegex(Exception, r"(.*)longer than 1024 bases(.*)"):
             ShortSeq.from_str(exc_seq)
+
+    """Are incompatible sequence characters rejected?"""
 
     def test_incompatible_seq_chars(self):
         problems_64 =  ["N", "*"]
@@ -81,33 +120,56 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
 
 
 class ShortSeqVarTests(unittest.TestCase):
-    """These tests are for the ShortSeqVar class."""
+    """These tests address the variable length ShortSeq variant (ShortSeqVar)"""
 
+    """Does ShortSeq correctly transition to using ShortSeqVar objects
+    when sequence length crosses the 64 base threshold?"""
 
     def test_min_length(self):
         sample_len = 65
         n_samples = 3
 
         for _ in range(n_samples):
-            sample = ''.join(np.random.choice(["A", "C", "T", "G"]) for _ in range(sample_len))
+            sample = rand_sequence(sample_len, no_range=True)
             sq = ShortSeq.from_str(sample)
 
             self.assertIsInstance(sq, ShortSeqVar)
             self.assertEqual(len(sq), len(sample))
             self.assertEqual(str(sq), sample)
+
+    """Checks that randomly generated sequences encode and decode correctly
+    for the entire valid range of lengths."""
 
     def test_length_range(self):
         # TODO: make importable constants
         min_len, max_len = 65, 1024
 
         for length in range(min_len, max_len):
-            sample = ''.join(np.random.choice(["A", "C", "T", "G"]) for _ in range(length))
+            sample = rand_sequence(length, no_range=True)
             sq = ShortSeq.from_str(sample)
 
             self.assertIsInstance(sq, ShortSeqVar)
             self.assertEqual(len(sq), len(sample))
             self.assertEqual(str(sq), sample)
 
+    """A primitive benchmark for PyBytes to ShortSeqVar vs PyUnicode runtime."""
+
+    @unittest.skip("Long running benchmark test")
+    def test_benchmark(self):
+        sample_size = 10000
+        min_len, max_len = 65, 1023
+        samples = [rand_sequence(min_len, max_len, as_bytes=True) for _ in range(sample_size)]
+        print("samples done")
+
+        start = time.time()
+        uni = [seq.decode() for seq in samples]
+        end = time.time()
+        print(f"{end - start:.8f}s unicode")
+
+        start = time.time()
+        sq = [ShortSeq.from_bytes(seq) for seq in samples]
+        end = time.time()
+        print(f"{end - start:.8f}s ShortSeq")
 
 
 # For now, you must first generate these files using the make_data() helper function.
@@ -200,6 +262,7 @@ class Profiling(unittest.TestCase):
 
         print(f"Time difference: {diff:.5f} ({pct:.1f}% {direction})")
 
+    @unittest.skip("Long running benchmark test")
     def test_benchmark(self):
         mem = []
         process = psutil.Process(os.getpid())

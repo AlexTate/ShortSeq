@@ -16,8 +16,9 @@ Since Python is a loosely typed language with a lot of conveniences, both the nu
 
 | Sequence Length | PyUnicode Size<sup>*</sup> | PyBytes Size<sup>*</sup> | ShortSeq Size<sup>*</sup> | % Reduction |
 |-----------------|----------------------------|--------------------------|---------------------------|-------------|
-| 33-64 nt        | 88-120 bytes               | 72-104 bytes             | 48 bytes (fixed)          | **33-60%**  |
 | 0-32 nt         | 56-88 bytes                | 40-72 bytes              | 32 bytes (fixed)          | **20-64%**  |
+| 33-64 nt        | 88-120 bytes               | 72-104 bytes             | 48 bytes (fixed)          | **33-60%**  |
+| 65-1024 nt      | 120-1080 bytes             | 104-1064 bytes           | 48-288 bytes              | **53-73%**  |
 
 <sup>*</sup> Object sizes were measured on Python 3.10 using `asizeof()` from the `pympler` package.
 
@@ -30,4 +31,4 @@ The time it takes to convert a list of sequences as Python bytes objects (each b
 The original ASCII form of each ShortSeq is decoded "lazily", i.e. it happens only when asked and the result isn't cached in the object, so it must be recomputed with each request. However, ShortSeqs still retain the original string's length and their ability to be compared for equality. The packed integer form of each sequence additionally acts as its pre-computed hash value. These two properties make ShortSeqs ideal for use in datastructures like sets and dictionaries, making them useful for efficiently gathering statistics involving very large volumes of short sequences.
 
 ### Longer Sequences, Featuring SIMD Encoding
-Longer sequences (65 - 1024 bases) are now experimentally supported. The encoding phase uses SIMD instructions to convert 8 bases at a time for much higher throughput. Most Intel CPUs 2014 and newer, and AMD CPUs 2020 and newer support these instructions (BMI2). 
+Longer sequences (65 - 1024 bases) are now experimentally supported. The encoding phase uses SIMD instructions to convert 8 bases at a time for much higher throughput. Most Intel CPUs 2014 and newer, and AMD CPUs 2020 and newer support these instructions (BMI2). As a result, the PyBytes → ShortSeq conversion is often faster than PyBytes → PyUnicode. However, sequences of this length are not checked for invalid base characters, so it is the user's responsibility to ensure that only valid DNA strings are used. 

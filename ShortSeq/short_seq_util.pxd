@@ -49,7 +49,7 @@ A little bit of hackery to allow fast access to the packed hash field of both
 ShortSeq64 and ShortSeq128, since inheritance and virtual function emulation
 come with a heavy cost in Cython.
 """
-ctypedef struct ShortSeqGeneric:  # Todo: rename (to ShortSeqGeneric?)
+ctypedef struct ShortSeqGeneric:
     PyObject ob_base
     uint64_t _packed
 
