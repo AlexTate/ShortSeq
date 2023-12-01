@@ -3,13 +3,12 @@ from Cython.Build import cythonize
 
 # Package metadata
 NAME = 'ShortSeq'
-DESCRIPTION = ''
+DESCRIPTION = 'Compact representation of short DNA sequences that uses up to 73% less memory'
 URL = 'https://github.com/AlexTate/ShortSeq'
-EMAIL = '0xalextate@gmail.com'
 AUTHOR = 'Alex Tate'
 PLATFORM = 'Unix'
 REQUIRES_PYTHON = '>=3.10.0'
-VERSION = '0.1'
+VERSION = '0.0.1'
 
 
 short_seq_common_compile_args = [
@@ -53,7 +52,6 @@ setup(
     name=NAME,
     version=VERSION,
     author=AUTHOR,
-    author_email=EMAIL,
     description=DESCRIPTION,
     include_package_data=True,
     packages=['ShortSeq'],
