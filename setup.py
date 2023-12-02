@@ -1,4 +1,4 @@
-from setuptools import setup, Extension
+from setuptools import setup, find_namespace_packages, Extension
 from Cython.Build import cythonize
 
 # Package metadata
@@ -12,7 +12,6 @@ VERSION = '0.0.1'
 
 
 short_seq_common_compile_args = [
-    '-stdlib=libc++',
     '-std=c++20',
     "-O3",
     '-march=native']
@@ -54,7 +53,7 @@ setup(
     author=AUTHOR,
     description=DESCRIPTION,
     include_package_data=True,
-    packages=['ShortSeq'],
+    packages=find_namespace_packages(),
     zip_safe=False,
     ext_modules=cythonize(
         extensions,
