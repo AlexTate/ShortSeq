@@ -38,7 +38,7 @@ ctypedef struct PyBytesObject:
     char ob_sval[1]
 
 """
-For vectorized operations. 
+For SIMD operations. 
 """
 cdef extern from "x86intrin.h" nogil:
     uint64_t _pext_u64 (uint64_t __X, uint64_t __Y)
@@ -82,6 +82,10 @@ This is a temporary fix until I find a better solution
 cdef inline bint is_base(uint8_t char) nogil:
     return bloom & (1 << (char & 63)) == 0
 
+
+"""
+Performs element-wise equality check for two dynamic C arrays of uint64_t's
+"""
 cdef inline bint is_array_equal(uint64_t* a, uint64_t* b, size_t length) nogil:
     cdef size_t i
 

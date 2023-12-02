@@ -1,15 +1,12 @@
 # cython: language_level = 3, language=c++, profile=False, linetrace=False
-import sys
 import time
 
 import cython  # For function decorators
 from cython.operator cimport dereference as deref
 
-# Avoids initial increment from zero (reuse existing one-object instead)
-cdef object one = PyLong_FromSize_t(1)
-
-# Singleton for empty sequences
+# Singleton Values
 cdef ShortSeq64 empty = ShortSeq64.__new__(ShortSeq64)
+cdef object one = PyLong_FromSize_t(1)
 
 cdef class ShortSeq:
     """Factory class that constructs the minimum object (ShortSeq64, ShortSeq128, or ShortSeqVar) for the sequence."""
@@ -38,13 +35,13 @@ cdef class ShortSeq:
 
     @staticmethod
     cdef object _from_py_bytes(bytes seq_bytes):
-        cdef char* sequence = PyBytes_AsString(seq_bytes)   # deref(<PyBytesObject *> seq_bytes).ob_sval
+        cdef char* sequence = PyBytes_AsString(seq_bytes)
         cdef size_t length = Py_SIZE(seq_bytes)             # Note: already called PyBytes_Check() on prev line
         return ShortSeq._new(sequence, length)
 
     @staticmethod
     cdef inline object _from_chars(char* sequence):
-        cdef size_t length = strlen(sequence) - 1           # sequence is expected to include a trailing newline character
+        cdef size_t length = strlen(sequence) - 1           # Note: sequence is expected to have trailing \n
         return ShortSeq._new(sequence, length)
 
     @staticmethod

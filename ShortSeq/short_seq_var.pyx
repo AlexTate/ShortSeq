@@ -73,13 +73,13 @@ cdef uint64_t* _marshall_bytes_var(uint8_t* seq_bytes, size_t length):
         offset_p32 = n_p32 * 4
 
         if serial:
-            serial_it = <uint8_t*>(seq_it + offset_p32 + offset_p64)
-            block = _marshall_bytes_serial(block, serial_it, serial)    # should occupy upper bits, but be last bases
+            ser_it = <uint8_t*>(seq_it + offset_p32 + offset_p64)
+            block = _marshall_bytes_serial(block, ser_it, serial)    # should occupy upper bits, but be last bases
         if n_p32:
             p32_it = <uint8_t*>(seq_it + offset_p64)
             block = _marshall_bytes_pext_u32(block, p32_it, n_p32)
         if n_p64:
-            block = _marshall_bytes_pext_u64(block, seq_it, n_p64)      # should occupy lower bits, but be first bases
+            block = _marshall_bytes_pext_u64(block, seq_it, n_p64)   # should occupy lower bits, but be first bases
 
         hash_arr[i] = block
         seq_it += block_rem

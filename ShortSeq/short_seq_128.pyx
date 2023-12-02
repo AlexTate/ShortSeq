@@ -41,9 +41,6 @@ cdef class ShortSeq128:
     def __str__(self):
         return _unmarshall_bytes_128(self._packed, self._length)
 
-# cdef inline Py_hash_t _hash_128(uint128_t packed):
-#     return
-
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.boundscheck(False)

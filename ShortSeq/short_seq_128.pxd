@@ -14,5 +14,3 @@ cdef class ShortSeq128:                # 16 bytes (PyObject_HEAD)
 
 # Forward declaration to allow for cimport
 cdef uint128_t _marshall_bytes_128(uint8_t* seq_bytes, uint8_t length, bint with_length=*) nogil
-
-# Todo: why are we defining _marshall_bytes() but not _unmarshall_bytes() here?
