@@ -10,8 +10,13 @@ cdef class ShortSeqVar:
 
     def __eq__(self, other):
         if type(other) is ShortSeqVar:
-            return self._length == (<ShortSeqVar>other)._length and \
-                   is_array_equal(self._packed, (<ShortSeqVar>other)._packed, self._length)
+            other_len = (<ShortSeqVar>other)._length
+            other_ptr = (<ShortSeqVar>other)._packed
+            return self._length == other_len and \
+                memcmp(self._packed, <void *>other_ptr, self._length) == 0
+        elif isinstance(other, (str, bytes)):
+            return self._length == len(other) and \
+                   str(self) == other
         else:
             return False
 

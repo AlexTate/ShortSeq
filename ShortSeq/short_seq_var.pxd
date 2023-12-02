@@ -1,6 +1,7 @@
 from .short_seq_util cimport *
 from cpython.mem cimport PyObject_Calloc, PyObject_Free
 from libc.math cimport ceil
+from libc.string cimport memcmp
 
 # For Cython, this is necessary for using these types in brackets (reinterpret_cast)
 ctypedef uint64_t* llstr

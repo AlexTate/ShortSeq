@@ -49,6 +49,9 @@ cdef class ShortSeq64:
         if type(other) is ShortSeq64:
             return self._length == (<ShortSeq64>other)._length and \
                    self._packed == (<ShortSeq64>other)._packed
+        elif isinstance(other, (str, bytes)):
+            return self._length == len(other) and \
+                   str(self) == other
         else:
             return False
 

@@ -35,6 +35,9 @@ cdef class ShortSeq128:
         if type(other) is ShortSeq128:
             return self._length == (<ShortSeq128> other)._length and \
                    self._packed == (<ShortSeq128> other)._packed
+        elif isinstance(other, (str, bytes)):
+            return self._length == len(other) and \
+                   str(self) == other
         else:
             return False
 
