@@ -1,3 +1,4 @@
-setuptools
-Cython
+cython
+numpy
 psutil
+setuptools
