@@ -1,0 +1,1 @@
+This isn't actively developed. Most UMI-specific things are implemented but variable length sequences are not. The parts that remain undeveloped are largely covered by the ShortSeqVar class. Once that is complete it will make more sense to loop back to this. 

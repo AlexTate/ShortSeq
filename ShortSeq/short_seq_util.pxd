@@ -5,6 +5,7 @@ from libcpp.cast cimport reinterpret_cast
 
 from cpython.object cimport Py_SIZE, PyObject
 from cpython.ref cimport Py_XDECREF, Py_XINCREF
+from cpython.slice cimport PySlice_GetIndicesEx, PySlice_AdjustIndices
 from cpython.unicode cimport PyUnicode_DecodeASCII
 
 
@@ -93,3 +94,13 @@ cdef inline bint is_array_equal(uint64_t* a, uint64_t* b, size_t length) nogil:
         if a[i] != b[i]: return False
 
     return True
+
+
+"""
+Performs euclidean division and remainder and returns the result as a pair.
+This is essentially the C version of Python's divmod function. Note that
+Python-style modulo is performed and not C-style remainder, so this should
+still give expected values for negative numbers.
+"""
+
+cdef (size_t, size_t) _divmod(size_t dividend, size_t divisor)

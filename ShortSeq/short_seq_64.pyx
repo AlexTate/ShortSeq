@@ -23,6 +23,13 @@ Consider if length was encoded into the lower 6 bits (representing up to 63):
     PyUnicode equivalent: 80 bytes (60% reduction)
 """
 
+# Constants
+MIN_64_NT = 0
+MAX_64_NT = 32
+
+"""Used to export these constants to Python space"""
+def get_domain_64(): return MIN_64_NT, MAX_64_NT
+
 cdef class ShortSeq64:
     # Todo: decide whether to standardize or remove (esp. setter...)
 
@@ -45,18 +52,45 @@ cdef class ShortSeq64:
     def __hash__(self) -> uint64_t:
         return self._packed
 
+    def __len__(self):
+        return self._length
+
     def __eq__(self, other):
         if type(other) is ShortSeq64:
             return self._length == (<ShortSeq64>other)._length and \
                    self._packed == (<ShortSeq64>other)._packed
+        elif isinstance(other, (str, bytes)):
+            return self._length == len(other) and \
+                   str(self) == other
         else:
             return False
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def __getitem__(self, item):
+        cdef Py_ssize_t index, start, stop, step, slice_len
+
+        if isinstance(item, slice):
+            if PySlice_GetIndicesEx(item, self._length, &start, &stop, &step, &slice_len) < 0:
+                raise Exception("Slice error")
+            if step != 1:
+                raise TypeError("Slice step not supported")
+            return _unmarshall_bytes_64(self._packed >> (start * 2), slice_len)
+        elif isinstance(item, int):
+            index = item
+            if index < 0: index += self._length
+            if index < 0 or index >= self._length:
+                raise IndexError("Sequence index out of range")
+            return _unmarshall_bytes_64(self._packed >> (index * 2), 1)
+        else:
+            raise TypeError(f"Invalid index type: {type(item)}")
 
     def __str__(self):
         return _unmarshall_bytes_64(self._packed, self._length)
 
-    def __len__(self):
-        return self._length
+    def __repr__(self):
+        return f"<ShortSeq64 ({self._length} nt): {self}>"
+
 
 @cython.wraparound(False)
 @cython.cdivision(True)

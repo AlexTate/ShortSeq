@@ -1,5 +1,9 @@
 from .short_seq_util cimport *
 
+# Constants
+cdef size_t MIN_64_NT
+cdef size_t MAX_64_NT
+
 # Reusable buffer for unmarshalling
 cdef char out_ascii_buffer_32[32]
 
