@@ -1,6 +1,8 @@
 import unittest
 import time
 
+from pympler.asizeof import asizeof
+
 from ShortSeq import ShortSeq, ShortSeq64, ShortSeq128, ShortSeqVar
 from ShortSeq import MIN_VAR_NT, MAX_VAR_NT, MIN_64_NT, MAX_64_NT, MIN_128_NT, MAX_128_NT
 from ShortSeq.tests.util import rand_sequence, print_var_seq_pext_chunks
@@ -63,6 +65,109 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
             with self.assertRaisesRegex(Exception, "Unsupported base character"):
                 ShortSeq.from_str(prob)
 
+    """Checks that randomly generated sequences encode and decode correctly
+        for the entire valid range of lengths."""
+
+    def test_length_range(self):
+        # ShortSeq64
+        length = None
+        try:
+            for length in range(MIN_64_NT, MAX_64_NT):
+                sample = rand_sequence(length, no_range=True)
+                sq = ShortSeq.from_str(sample)
+
+                self.assertIsInstance(sq, ShortSeq64)
+                self.assertEqual(len(sq), len(sample))
+                self.assertEqual(str(sq), sample)
+        except Exception as e:
+            print(f"Failed at length {length} (ShortSeq64)")
+            raise e
+
+        # ShortSeq128
+        length = None
+        try:
+            for length in range(MIN_128_NT, MAX_128_NT):
+                sample = rand_sequence(length, no_range=True)
+                sq = ShortSeq.from_str(sample)
+
+                self.assertIsInstance(sq, ShortSeq128)
+                self.assertEqual(len(sq), len(sample))
+                self.assertEqual(str(sq), sample)
+        except Exception as e:
+            print(f"Failed at length {length} (ShortSeq128)")
+            raise e
+
+    """Can fixed width ShortSeqs be indexed like strings?"""
+
+    def test_subscript(self):
+        #ShortSeq64
+        sample64, length, i, sq = None, None, None, None
+        try:
+            for length in range(MIN_64_NT, MAX_64_NT):
+                sample64 = rand_sequence(length, no_range=True)
+                sq = ShortSeq.from_str(sample64)
+                for i in range(len(sample64)):
+                    self.assertEqual(sq[i], sample64[i])
+                    self.assertEqual(sq[-i], sample64[-i])
+        except Exception as e:
+            print(f"Failed at length {length} index {i} (ShortSeq64)")
+            raise e
+
+        for oob in [len(sample64) + 1, -len(sample64) - 1]:
+            with self.assertRaises(IndexError):
+                _ = sq[oob]
+
+        # ShortSeq128
+        sample128, length, i, sq = None, None, None, None
+        try:
+            for length in range(MIN_128_NT, MAX_128_NT):
+                sample128 = rand_sequence(length, no_range=True)
+                sq = ShortSeq.from_str(sample128)
+                for i in range(len(sample128)):
+                    self.assertEqual(sq[i], sample128[i])
+                    self.assertEqual(sq[-i], sample128[-i])
+        except Exception as e:
+            print(f"Failed at length {length} index {i} (ShortSeq128)")
+            raise e
+
+        for oob in [len(sample128) + 1, -len(sample128) - 1]:
+            with self.assertRaises(IndexError):
+                _ = sq[oob]
+
+
+    """Can fixed width ShortSeqs be sliced like strings?"""
+
+    def test_slice(self):
+        #ShortSeq64
+        sample = rand_sequence(MAX_64_NT, no_range=True)
+        sq = ShortSeq.from_str(sample)
+        self.assertEqual(sq[:], sample)
+        for i in range(len(sample)):
+            self.assertEqual(sq[:i], sample[:i])
+            self.assertEqual(sq[:-i], sample[:-i])
+            self.assertEqual(sq[i:], sample[i:])
+            self.assertEqual(sq[-i:], sample[-i:])
+
+        # ShortSeq128
+        sample = rand_sequence(MAX_128_NT, no_range=True)
+        sq = ShortSeq.from_str(sample)
+        self.assertEqual(sq[:], sample)
+        for i in range(len(sample)):
+            self.assertEqual(sq[:i], sample[:i])
+            self.assertEqual(sq[:-i], sample[:-i])
+            self.assertEqual(sq[i:], sample[i:])
+            self.assertEqual(sq[-i:], sample[-i:])
+
+    def test_gzip_size_comparison(self):
+        sample = rand_sequence(MAX_64_NT, no_range=True)
+        import gzip
+
+        gz_bytes = gzip.compress(sample.encode())
+        print(asizeof(gz_bytes))
+        print(asizeof(sample.encode()))
+        print(asizeof(ShortSeq.from_str(sample)))
+
+
 
 class ShortSeqVarTests(unittest.TestCase):
     """These tests address the variable length ShortSeq variant (ShortSeqVar)"""
@@ -97,16 +202,60 @@ class ShortSeqVarTests(unittest.TestCase):
     for the entire valid range of lengths."""
 
     def test_length_range(self):
-        # TODO: make importable constants
-        min_len, max_len = 65, 1024
+        length = None
+        try:
+            for length in range(MIN_VAR_NT, MAX_VAR_NT-1):
+                sample = rand_sequence(length, no_range=True)
+                sq = ShortSeq.from_str(sample)
 
-        for length in range(min_len, max_len):
-            sample = rand_sequence(length, no_range=True)
-            sq = ShortSeq.from_str(sample)
+                self.assertIsInstance(sq, ShortSeqVar)
+                self.assertEqual(len(sq), len(sample))
+                self.assertEqual(str(sq), sample)
+        except Exception as e:
+            print(f"Failed at length {length}")
+            raise e
 
-            self.assertIsInstance(sq, ShortSeqVar)
-            self.assertEqual(len(sq), len(sample))
-            self.assertEqual(str(sq), sample)
+    """Can ShortSeqVars be indexed like strings?"""
+
+    def test_subscript(self):
+        length, i = None, None
+        try:
+            for length in range(MIN_VAR_NT, MAX_VAR_NT-1):
+                sample = rand_sequence(length, no_range=True)
+                sq = ShortSeq.from_str(sample)
+                for i in range(len(sample)):
+                    self.assertEqual(sq[i], sample[i])
+                    self.assertEqual(sq[-i], sample[-i])
+        except Exception as e:
+            print(f"Failed at length {length} index {i}")
+            raise e
+
+        for oob in [len(sample) + 1, -len(sample) - 1]:
+            with self.assertRaises(IndexError):
+                _ = sq[oob]
+
+    """Can ShortSeqVars be sliced like strings?"""
+
+    def test_slice(self):
+        # Min length
+        sample = rand_sequence(MIN_VAR_NT, no_range=True)
+        sq = ShortSeq.from_str(sample)
+        self.assertEqual(sq[:], sample)
+        for i in range(len(sample)):
+            self.assertEqual(sq[:i], sample[:i])
+            self.assertEqual(sq[:-i], sample[:-i])
+            self.assertEqual(sq[i:], sample[i:])
+            self.assertEqual(sq[-i:], sample[-i:])
+
+        # Max length
+        sample = rand_sequence(MAX_VAR_NT, no_range=True)
+        sq = ShortSeq.from_str(sample)
+        self.assertEqual(sq[:], sample)
+        for i in range(len(sample)):
+            self.assertEqual(sq[:i], sample[:i])
+            self.assertEqual(sq[:-i], sample[:-i])
+            self.assertEqual(sq[i:], sample[i:])
+            self.assertEqual(sq[-i:], sample[-i:])
 
 
 if __name__ == '__main__':
