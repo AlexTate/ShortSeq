@@ -25,4 +25,4 @@ cdef uint64_t* _marshall_bytes_var(uint8_t* seq_bytes, size_t length)
 cdef uint64_t _marshall_bytes_pext_u64(uint64_t block, uint8_t* &seq_bytes, size_t n_pext) nogil
 cdef uint64_t _marshall_bytes_pext_u32(uint64_t block, uint8_t* &seq_bytes, size_t n_pext) nogil
 cdef uint64_t _marshall_bytes_serial(uint64_t block, uint8_t* &seq_bytes, size_t length) nogil
-cdef unicode _unmarshall_bytes_var(uint64_t* enc_seq, size_t length)
+cdef unicode _unmarshall_bytes_var(uint64_t* enc_seq, size_t length, size_t start_block=*, size_t offset=*)

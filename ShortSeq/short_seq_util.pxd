@@ -5,6 +5,7 @@ from libcpp.cast cimport reinterpret_cast
 
 from cpython.object cimport Py_SIZE, PyObject
 from cpython.ref cimport Py_XDECREF, Py_XINCREF
+from cpython.slice cimport PySlice_GetIndicesEx, PySlice_AdjustIndices
 from cpython.unicode cimport PyUnicode_DecodeASCII
 
 

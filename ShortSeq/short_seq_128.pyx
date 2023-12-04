@@ -47,6 +47,26 @@ cdef class ShortSeq128:
         else:
             return False
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def __getitem__(self, item):
+        cdef Py_ssize_t index, start, stop, step, slice_len
+
+        if isinstance(item, slice):
+            if PySlice_GetIndicesEx(item, self._length, &start, &stop, &step, &slice_len) < 0:
+                raise Exception("Slice error")
+            if step != 1:
+                raise TypeError("Slice step not supported")
+            return _unmarshall_bytes_128(self._packed >> (start * 2), slice_len)
+        elif isinstance(item, int):
+            index = item
+            if index < 0: index += self._length
+            if index < 0 or index >= self._length:
+                raise IndexError("Sequence index out of range")
+            return _unmarshall_bytes_128(self._packed >> (index * 2), 1)
+        else:
+            raise TypeError(f"Invalid index type: {type(item)}")
+
     def __str__(self):
         return _unmarshall_bytes_128(self._packed, self._length)
 
