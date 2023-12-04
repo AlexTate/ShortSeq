@@ -1,5 +1,9 @@
 from .short_seq_util cimport *
 
+# Constants
+cdef size_t MIN_128_NT
+cdef size_t MAX_128_NT
+
 # Cython needs help recognizing 128bit integers
 cdef extern from *:
     ctypedef unsigned long long uint128_t "__uint128_t"

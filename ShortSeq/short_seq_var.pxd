@@ -3,6 +3,11 @@ from cpython.mem cimport PyObject_Calloc, PyObject_Free
 from libc.math cimport ceil
 from libc.string cimport memcmp
 
+# Constants
+cdef size_t MAX_VAR_NT
+cdef size_t MIN_VAR_NT
+cdef size_t MAX_REPR_LEN
+
 # For Cython, this is necessary for using these types in brackets (reinterpret_cast)
 ctypedef uint64_t* llstr
 ctypedef uint32_t* istr

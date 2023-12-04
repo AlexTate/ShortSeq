@@ -24,6 +24,12 @@ Consider encoding length into lower 6 bits (representing up to 63):
     PyUnicode equivalent: 112 bytes (57% reduction)
 """
 
+MIN_128_NT = 33
+MAX_128_NT = 64
+
+"""Used to export these constants to Python space"""
+def get_domain_128(): return MIN_128_NT, MAX_128_NT
+
 cdef class ShortSeq128:
     def __hash__(self):
         return <uint64_t>self._packed

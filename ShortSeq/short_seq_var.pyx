@@ -4,6 +4,17 @@ cimport cython
 
 from cython.operator cimport dereference as deref
 
+# Importable constants
+MIN_VAR_NT = 65
+MAX_VAR_NT = 1024
+MAX_REPR_LEN = 75
+
+# Constants
+cdef size_t NT_PER_BLOCK = 32
+
+"""Used to export these constants to Python space"""
+def get_domain_var(): return MIN_VAR_NT, MAX_VAR_NT
+
 cdef class ShortSeqVar:
     def __hash__(self):
         return deref(self._packed)

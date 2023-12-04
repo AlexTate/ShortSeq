@@ -23,6 +23,13 @@ Consider if length was encoded into the lower 6 bits (representing up to 63):
     PyUnicode equivalent: 80 bytes (60% reduction)
 """
 
+# Constants
+MIN_64_NT = 0
+MAX_64_NT = 32
+
+"""Used to export these constants to Python space"""
+def get_domain_64(): return MIN_64_NT, MAX_64_NT
+
 cdef class ShortSeq64:
     # Todo: decide whether to standardize or remove (esp. setter...)
 
