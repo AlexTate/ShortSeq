@@ -1,5 +1,20 @@
-# These values must be assigned here in order for the definition
-# (and not just the declaration) to be correctly cimported
+import cython
+
+@cython.cdivision(True)
+cdef inline (size_t, size_t) _divmod(size_t dividend, size_t divisor):
+    cdef size_t div_res
+    cdef size_t mod_res
+
+    if divisor == 0: raise ZeroDivisionError()
+    div_res = dividend // divisor
+    mod_res = (((dividend % divisor) + divisor) % divisor)
+
+    return div_res, mod_res
+
+"""
+These values must be assigned here in order for the definition
+(and not just the declaration) to be correctly cimported
+"""
 
 cdef uint8_t[91] table_91 = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
