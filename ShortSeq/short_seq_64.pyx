@@ -45,6 +45,9 @@ cdef class ShortSeq64:
     def __hash__(self) -> uint64_t:
         return self._packed
 
+    def __len__(self):
+        return self._length
+
     def __eq__(self, other):
         if type(other) is ShortSeq64:
             return self._length == (<ShortSeq64>other)._length and \
@@ -58,8 +61,9 @@ cdef class ShortSeq64:
     def __str__(self):
         return _unmarshall_bytes_64(self._packed, self._length)
 
-    def __len__(self):
-        return self._length
+    def __repr__(self):
+        return f"<ShortSeq64 ({self._length} nt): {self}>"
+
 
 @cython.wraparound(False)
 @cython.cdivision(True)

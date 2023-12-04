@@ -8,6 +8,9 @@ cdef class ShortSeqVar:
     def __hash__(self):
         return deref(self._packed)
 
+    def __len__(self):
+        return self._length
+
     def __eq__(self, other):
         if type(other) is ShortSeqVar:
             other_len = (<ShortSeqVar>other)._length
@@ -23,8 +26,10 @@ cdef class ShortSeqVar:
     def __str__(self):
         return _unmarshall_bytes_var(self._packed, self._length)
 
-    def __len__(self):
-        return self._length
+    def __repr__(self):
+        # Clips the sequence to MAX_REPR_LEN characters to avoid overwhelming the debugger
+        cdef unicode clipped_seq = _unmarshall_bytes_var(self._packed, MAX_REPR_LEN)
+        return f"<ShortSeqVar ({self._length} nt): {self} ... >"
 
     def __dealloc__(self):
         if self._packed is not NULL:

@@ -44,6 +44,10 @@ cdef class ShortSeq128:
     def __str__(self):
         return _unmarshall_bytes_128(self._packed, self._length)
 
+    def __repr__(self):
+        return f"<ShortSeq128 ({self._length} nt): {self}>"
+
+
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.boundscheck(False)
