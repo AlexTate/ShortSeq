@@ -16,7 +16,7 @@ In the table above, you can see that Python's memory representation of DNA seque
 ### Installation
 
 ```shell
-mamba install -c bioconda shortseq
+mamba install -c bioconda -c conda-forge shortseq
 ```
 
 
