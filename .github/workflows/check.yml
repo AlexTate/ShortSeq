@@ -1,6 +1,6 @@
 name: check
 on:
-  push:
+#  push:
   pull_request:
 
 concurrency:
