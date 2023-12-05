@@ -1,0 +1,7 @@
+include README.md
+graft ShortSeq
+prune ShortSeq/tests/testdata/
+prune *.egg-info/
+prune **/__pycache__
+global-exclude .DS_Store
+global-exclude *.so
