@@ -9,11 +9,13 @@ from cpython.unicode cimport PyUnicode_AsASCIIString
 
 from libcpp.vector cimport vector
 
-from .short_seq_util cimport *
 from .short_seq_var cimport *
 from .short_seq_128 cimport *
 from .short_seq_64 cimport *
 from .fast_read cimport *
+from .util cimport *
+
+from ShortSeq import MAX_64_NT, MAX_128_NT, MAX_VAR_NT
 
 """
 Private dictionary fast-path methods not currently offered by the Cython wrapper

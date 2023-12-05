@@ -1,4 +1,4 @@
-from .short_seq_util cimport *
+from .util cimport *
 from cpython.mem cimport PyObject_Calloc, PyObject_Free
 from libc.math cimport ceil
 from libc.string cimport memcmp
