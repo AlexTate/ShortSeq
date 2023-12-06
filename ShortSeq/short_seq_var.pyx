@@ -62,6 +62,21 @@ cdef class ShortSeqVar:
     def __str__(self):
         return _unmarshall_bytes_var(self._packed, self._length)
 
+    def __xor__(self, ShortSeqVar other):
+        cdef uint64_t block, block_other, block_comp
+        cdef size_t n_blocks = _length_to_block_num(self._length)
+        cdef size_t pop_cnt = 0
+        cdef size_t i
+
+        for i in range(n_blocks):
+            block = self._packed[i]
+            block_other = other._packed[i]
+            block_comp = block ^ block_other
+            block_comp = ((block_comp >> 1) | block_comp) & 0x5555555555555555LL  # Some bases XOR to 0x3; collapse these inplace to 0x1
+            pop_cnt += _popcnt64(block_comp)
+
+        return pop_cnt
+
     def __repr__(self):
         # Clips the sequence to MAX_REPR_LEN characters to avoid overwhelming the debugger
         cdef unicode clipped_seq = _unmarshall_bytes_var(self._packed, MAX_REPR_LEN)
