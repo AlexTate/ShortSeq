@@ -67,6 +67,20 @@ cdef class ShortSeq128:
         else:
             raise TypeError(f"Invalid index type: {type(item)}")
 
+    def __xor__(self, ShortSeq128 other):
+        if self._length != other._length:
+            raise Exception("Hamming distance requires sequences of equal length")
+
+        cdef uint128_t xor = self._packed ^ (<ShortSeq128> other)._packed
+        cdef uint64_t lo = <uint64_t> xor
+        cdef uint64_t hi = xor >> 64
+
+        # Some bases XOR to 0x3; collapse these results to 0x1 inplace
+        lo = ((lo >> 1) | lo) & 0x5555555555555555LL
+        hi = ((hi >> 1) | hi) & 0x5555555555555555LL
+
+        return _popcnt64(lo) + _popcnt64(hi)
+
     def __str__(self):
         return _unmarshall_bytes_128(self._packed, self._length)
 
