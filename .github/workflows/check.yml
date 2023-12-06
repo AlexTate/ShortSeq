@@ -18,9 +18,8 @@ jobs:
           - MacOs
         py:
           - 3.11
-          - 3.10
+          - '3.10'
           - 3.9
-          - 3.8
     steps:
       - name: Setup Python
         uses: actions/setup-python@v4

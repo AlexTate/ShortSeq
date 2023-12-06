@@ -7,7 +7,7 @@ DESCRIPTION = 'Compact representation of short DNA sequences that uses up to 73%
 URL = 'https://github.com/AlexTate/ShortSeq'
 AUTHOR = 'Alex Tate'
 PLATFORM = 'Unix'
-REQUIRES_PYTHON = '>=3.8, <=3.11'
+REQUIRES_PYTHON = '>3.8, <3.12'
 VERSION = '0.0.1'
 
 
