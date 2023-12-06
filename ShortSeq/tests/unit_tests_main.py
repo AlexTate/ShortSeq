@@ -1,5 +1,7 @@
 import unittest
 
+from random import randint
+
 from ShortSeq import ShortSeq, ShortSeq64, ShortSeq128, ShortSeqVar
 from ShortSeq import MIN_VAR_NT, MAX_VAR_NT, MIN_64_NT, MAX_64_NT, MIN_128_NT, MAX_128_NT
 from ShortSeq.tests.util import rand_sequence, print_var_seq_pext_chunks
@@ -70,7 +72,7 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
         length = None
         try:
             for length in range(MIN_64_NT, MAX_64_NT):
-                sample = rand_sequence(length, no_range=True)
+                sample = rand_sequence(length)
                 sq = ShortSeq.from_str(sample)
 
                 self.assertIsInstance(sq, ShortSeq64)
@@ -84,7 +86,7 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
         length = None
         try:
             for length in range(MIN_128_NT, MAX_128_NT):
-                sample = rand_sequence(length, no_range=True)
+                sample = rand_sequence(length)
                 sq = ShortSeq.from_str(sample)
 
                 self.assertIsInstance(sq, ShortSeq128)
@@ -101,7 +103,7 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
         sample64, length, i, sq = None, None, None, None
         try:
             for length in range(MIN_64_NT, MAX_64_NT):
-                sample64 = rand_sequence(length, no_range=True)
+                sample64 = rand_sequence(length)
                 sq = ShortSeq.from_str(sample64)
                 for i in range(len(sample64)):
                     self.assertEqual(sq[i], sample64[i])
@@ -118,7 +120,7 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
         sample128, length, i, sq = None, None, None, None
         try:
             for length in range(MIN_128_NT, MAX_128_NT):
-                sample128 = rand_sequence(length, no_range=True)
+                sample128 = rand_sequence(length)
                 sq = ShortSeq.from_str(sample128)
                 for i in range(len(sample128)):
                     self.assertEqual(sq[i], sample128[i])
@@ -136,7 +138,7 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
 
     def test_slice(self):
         #ShortSeq64
-        sample = rand_sequence(MAX_64_NT, no_range=True)
+        sample = rand_sequence(MAX_64_NT)
         sq = ShortSeq.from_str(sample)
         self.assertEqual(sq[:], sample)
         for i in range(len(sample)):
@@ -146,7 +148,7 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
             self.assertEqual(sq[-i:], sample[-i:])
 
         # ShortSeq128
-        sample = rand_sequence(MAX_128_NT, no_range=True)
+        sample = rand_sequence(MAX_128_NT)
         sq = ShortSeq.from_str(sample)
         self.assertEqual(sq[:], sample)
         for i in range(len(sample)):
@@ -167,7 +169,7 @@ class ShortSeqVarTests(unittest.TestCase):
         n_samples = 3
 
         for _ in range(n_samples):
-            sample = rand_sequence(sample_len, no_range=True)
+            sample = rand_sequence(sample_len)
             sq = ShortSeq.from_str(sample)
 
             self.assertIsInstance(sq, ShortSeqVar)
@@ -191,8 +193,8 @@ class ShortSeqVarTests(unittest.TestCase):
     def test_length_range(self):
         length = None
         try:
-            for length in range(MIN_VAR_NT, MAX_VAR_NT-1):
-                sample = rand_sequence(length, no_range=True)
+            for length in range(MIN_VAR_NT, MAX_VAR_NT):
+                sample = rand_sequence(length)
                 sq = ShortSeq.from_str(sample)
 
                 self.assertIsInstance(sq, ShortSeqVar)
@@ -207,8 +209,8 @@ class ShortSeqVarTests(unittest.TestCase):
     def test_subscript(self):
         length, i = None, None
         try:
-            for length in range(MIN_VAR_NT, MAX_VAR_NT-1):
-                sample = rand_sequence(length, no_range=True)
+            for length in range(MIN_VAR_NT, MAX_VAR_NT):
+                sample = rand_sequence(length)
                 sq = ShortSeq.from_str(sample)
                 for i in range(len(sample)):
                     self.assertEqual(sq[i], sample[i])
@@ -225,7 +227,7 @@ class ShortSeqVarTests(unittest.TestCase):
 
     def test_slice(self):
         # Min length
-        sample = rand_sequence(MIN_VAR_NT, no_range=True)
+        sample = rand_sequence(MIN_VAR_NT)
         sq = ShortSeq.from_str(sample)
         self.assertEqual(sq[:], sample)
         for i in range(len(sample)):
@@ -235,7 +237,7 @@ class ShortSeqVarTests(unittest.TestCase):
             self.assertEqual(sq[-i:], sample[-i:])
 
         # Max length
-        sample = rand_sequence(MAX_VAR_NT, no_range=True)
+        sample = rand_sequence(MAX_VAR_NT)
         sq = ShortSeq.from_str(sample)
         self.assertEqual(sq[:], sample)
         for i in range(len(sample)):

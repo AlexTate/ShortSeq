@@ -1,4 +1,4 @@
-import numpy as np
+import random
 import math
 
 
@@ -24,18 +24,16 @@ def print_var_seq_pext_chunks(seq):
     print(" -> ".join(out))
 
 
-def rand_sequence(min_length=None, max_length=None, no_range=False, as_bytes=False):
+def rand_sequence(min_length=None, max_length=None, as_bytes=False):
     """Returns a randomly generated sequence of the specified type, with a length in the specified range"""
 
     assert (min_length, max_length) != (None, None)
+    bases = ("A", "C", "T", "G")
 
-    if no_range:
-        max_length = min_length
-        min_length = 0
-    if min_length is None:
-        min_length = max_length
-    if max_length is None:
-        max_length = min_length
+    if min_length and max_length:
+        assert min_length <= max_length
+        seq = ''.join(random.choice(bases) for _ in range(min_length, max_length))
+    else:
+        seq = ''.join(random.choice(bases) for _ in range(min_length))
 
-    seq = ''.join(np.random.choice(["A", "C", "T", "G"]) for _ in range(min_length, max_length))
     return seq.encode() if as_bytes else seq
