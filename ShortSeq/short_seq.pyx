@@ -48,19 +48,19 @@ cdef class ShortSeq:
     cdef inline object _new(char* sequence, size_t length):
         if length == 0:
             return empty
-        elif length <= 32:
+        elif length <= MAX_64_NT:
             out64 = ShortSeq64.__new__(ShortSeq64)
             length = <uint8_t> length
             (<ShortSeq64> out64)._packed = _marshall_bytes_64(<uint8_t *> sequence, length)
             (<ShortSeq64> out64)._length = length
             return out64
-        elif length <= 64:
+        elif length <= MAX_128_NT:
             out128 = ShortSeq128.__new__(ShortSeq128)
             length = <uint8_t> length
             (<ShortSeq128> out128)._packed = _marshall_bytes_128(<uint8_t *> sequence, length)
             (<ShortSeq128> out128)._length = length
             return out128
-        elif length <= 1024:
+        elif length <= MAX_VAR_NT:
             outvar = ShortSeqVar.__new__(ShortSeqVar)
             (<ShortSeqVar> outvar)._packed = _marshall_bytes_var(<uint8_t *> sequence, length)
             (<ShortSeqVar> outvar)._length = length
