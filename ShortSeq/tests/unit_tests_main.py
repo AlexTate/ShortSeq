@@ -133,6 +133,16 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
             with self.assertRaises(IndexError):
                 _ = sq[oob]
 
+    """Does the Hamming distance between two ShortSeqs work as expected?"""
+
+    def test_hamming_distance(self):
+        def str_ham(a, b): return sum(a_nt != b_nt for a_nt, b_nt in zip(a, b))
+
+        for length in range(0, MAX_128_NT):
+            a = rand_sequence(length)
+            b = rand_sequence(length)
+
+            self.assertEqual(ShortSeq.from_str(a) ^ ShortSeq.from_str(b), str_ham(a, b))
 
     """Can fixed width ShortSeqs be sliced like strings?"""
 
@@ -245,6 +255,29 @@ class ShortSeqVarTests(unittest.TestCase):
             self.assertEqual(sq[:-i], sample[:-i])
             self.assertEqual(sq[i:], sample[i:])
             self.assertEqual(sq[-i:], sample[-i:])
+
+    """Just slice the heck out of the darn thing"""
+
+    def test_stochastic_slice(self):
+        sample = rand_sequence(MAX_VAR_NT)
+        sq = ShortSeq.from_str(sample)
+
+        for _ in range(10000):
+            a = randint(0, MAX_VAR_NT // 2)
+            b = randint(a, a + randint(1, MAX_VAR_NT - a))
+            self.assertEqual(sq[a:b], sample[a:b])
+
+    """Does the Hamming distance between two ShortSeqs work as expected?"""
+
+    def test_hamming_distance(self):
+        def str_ham(a, b): return sum(a_nt != b_nt for a_nt, b_nt in zip(a, b))
+
+        for length in range(MIN_VAR_NT, MAX_VAR_NT):
+            a = rand_sequence(length)
+            b = rand_sequence(length)
+
+            self.assertEqual(ShortSeq.from_str(a) ^ ShortSeq.from_str(b), str_ham(a, b))
+
 
 
 if __name__ == '__main__':
