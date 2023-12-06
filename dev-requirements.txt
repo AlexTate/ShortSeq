@@ -1,0 +1,3 @@
+tox<4
+tox-conda
+cython

@@ -1,4 +1,4 @@
-from ShortSeq.short_seq_util cimport *
+from ShortSeq.util cimport *
 from cpython.mem cimport PyObject_Calloc, PyObject_Free
 from cpython.exc cimport PyErr_NoMemory
 from libc.math cimport ceil, floor

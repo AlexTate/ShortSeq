@@ -1,7 +1,4 @@
 import unittest
-import time
-
-from pympler.asizeof import asizeof
 
 from ShortSeq import ShortSeq, ShortSeq64, ShortSeq128, ShortSeqVar
 from ShortSeq import MIN_VAR_NT, MAX_VAR_NT, MIN_64_NT, MAX_64_NT, MIN_128_NT, MAX_128_NT
@@ -157,16 +154,6 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
             self.assertEqual(sq[:-i], sample[:-i])
             self.assertEqual(sq[i:], sample[i:])
             self.assertEqual(sq[-i:], sample[-i:])
-
-    def test_gzip_size_comparison(self):
-        sample = rand_sequence(MAX_64_NT, no_range=True)
-        import gzip
-
-        gz_bytes = gzip.compress(sample.encode())
-        print(asizeof(gz_bytes))
-        print(asizeof(sample.encode()))
-        print(asizeof(ShortSeq.from_str(sample)))
-
 
 
 class ShortSeqVarTests(unittest.TestCase):
