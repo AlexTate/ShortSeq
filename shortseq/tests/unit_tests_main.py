@@ -5,7 +5,7 @@ from random import randint
 import shortseq as sq
 from shortseq import ShortSeq64, ShortSeq128, ShortSeqVar
 from shortseq import MIN_VAR_NT, MAX_VAR_NT, MIN_64_NT, MAX_64_NT, MIN_128_NT, MAX_128_NT
-from .util import rand_sequence, print_var_seq_pext_chunks
+from shortseq.tests.util import rand_sequence, print_var_seq_pext_chunks
 
 resources = "./testdata"
 
