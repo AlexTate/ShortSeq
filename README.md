@@ -1,4 +1,4 @@
-# ShortSeq
+# shortseq
 
 ShortSeqs are compact and efficient Python objects that hold short sequences while using up to 73% less memory compared to built-in types. They are prehashed and comparable, they support slicing and indexing, and they easily convert back to their original string form.
 
@@ -23,15 +23,15 @@ mamba install -c bioconda -c conda-forge shortseq
 ### Usage
 
 ```python
-from ShortSeq import ShortSeq, ShortSeqCounter
+import shortseq as sq
 
 # Construct from PyUnicode
 seq_str = "ATGC"
-seq_1 = ShortSeq.from_str(seq_str)
+seq_1 = sq.pack(seq_str)
 
 # Or, construct from PyBytes
 seq_bytes = b"ATGC"
-seq_2 = ShortSeq.from_bytes(seq_bytes)
+seq_2 = sq.pack(seq_bytes)
 
 # Verify outputs (optional)
 assert seq_1 == seq_2
@@ -39,8 +39,9 @@ assert seq_str == str(seq_1) == str(seq_2)
 assert len(seq_str) == len(seq_1) == len(seq_2)
 
 # Count unique sequences
+from shortseq import ShortSeqCounter
 counts = ShortSeqCounter([seq_bytes] * 10)
-assert counts == {ShortSeq.from_str("ATGC"): 10}
+assert counts == {sq.pack("ATGC"): 10}
 ```
 
 ### CPU Requirements

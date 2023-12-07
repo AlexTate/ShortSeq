@@ -15,7 +15,7 @@ from .short_seq_64 cimport *
 from .fast_read cimport *
 from .util cimport *
 
-from ShortSeq import MAX_64_NT, MAX_128_NT, MAX_VAR_NT
+from shortseq import MAX_64_NT, MAX_128_NT, MAX_VAR_NT
 
 """
 Private dictionary fast-path methods not currently offered by the Cython wrapper
@@ -31,21 +31,13 @@ cdef extern from "Python.h":
 
 
 """
-Forward declarations for importing
+Importable constructor functions for Cython space
 """
 
-cdef class ShortSeq:
-    @staticmethod
-    cdef object _from_py_str(str seq_str)
-
-    @staticmethod
-    cdef object _from_py_bytes(bytes seq_bytes)
-
-    @staticmethod
-    cdef inline object _from_chars(char* sequence)
-
-    @staticmethod
-    cdef inline object _new(char* sequence, size_t length)
+cdef object _from_py_str(str seq_str)
+cdef object _from_py_bytes(bytes seq_bytes)
+cdef object _from_chars(char* sequence)
+cdef object _new(char* sequence, size_t length)
 
 
 cdef class ShortSeqCounter(dict):

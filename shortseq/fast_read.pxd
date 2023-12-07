@@ -6,7 +6,7 @@ from libc.string cimport strdup, memchr
 from cpython.object cimport PyObject
 from cpython.ref cimport Py_XINCREF
 
-from .short_seq cimport ShortSeq
+from . cimport short_seq as sq
 
 cdef extern from "<fcntl.h>" nogil:
     # There is a performance advantage to notifying the kernel of our intent to use
