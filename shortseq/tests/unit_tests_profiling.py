@@ -7,7 +7,8 @@ from collections import Counter
 from pympler.asizeof import asizeof
 from random import randint
 
-from ShortSeq import ShortSeq, ShortSeqCounter, read_and_count_fastq
+import shortseq as sq
+from shortseq import ShortSeqCounter, read_and_count_fastq
 from .util import rand_sequence
 
 resources = "./testdata"
@@ -149,7 +150,7 @@ class Profiling(unittest.TestCase):
         print(f"{end - start:.8f}s unicode")
 
         start = time.time()
-        sq = [ShortSeq.from_bytes(seq) for seq in samples]
+        seq = [sq.from_bytes(seq) for seq in samples]
         end = time.time()
         print(f"{end - start:.8f}s ShortSeq")
 

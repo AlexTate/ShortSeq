@@ -2,9 +2,9 @@ from setuptools import setup, find_namespace_packages, Extension
 from Cython.Build import cythonize
 
 # Package metadata
-NAME = 'ShortSeq'
+NAME = 'shortseq'
 DESCRIPTION = 'Compact representation of short DNA sequences that uses up to 73% less memory'
-URL = 'https://github.com/AlexTate/ShortSeq'
+URL = 'https://github.com/AlexTate/shortseq'
 AUTHOR = 'Alex Tate'
 PLATFORM = 'Unix'
 REQUIRES_PYTHON = '>3.8, <3.12'
@@ -17,32 +17,32 @@ short_seq_common_compile_args = [
     '-march=native']
 
 extensions = [
-    Extension("ShortSeq.short_seq",
-              sources=['ShortSeq/short_seq.pyx'],
+    Extension("shortseq.short_seq",
+              sources=['shortseq/short_seq.pyx'],
               extra_compile_args=short_seq_common_compile_args,
               language='c++'),
-    Extension("ShortSeq.short_seq_var",
-              sources=['ShortSeq/short_seq_var.pyx'],
+    Extension("shortseq.short_seq_var",
+              sources=['shortseq/short_seq_var.pyx'],
               extra_compile_args=short_seq_common_compile_args,
               language='c++'),
-    Extension("ShortSeq.short_seq_128",
-              sources=['ShortSeq/short_seq_128.pyx'],
+    Extension("shortseq.short_seq_128",
+              sources=['shortseq/short_seq_128.pyx'],
               extra_compile_args=short_seq_common_compile_args,
               language='c++'),
-    Extension("ShortSeq.short_seq_64",
-              sources=['ShortSeq/short_seq_64.pyx'],
+    Extension("shortseq.short_seq_64",
+              sources=['shortseq/short_seq_64.pyx'],
               extra_compile_args=short_seq_common_compile_args,
               language='c++'),
-    Extension("ShortSeq.util",
-              sources=['ShortSeq/util.pyx'],
+    Extension("shortseq.util",
+              sources=['shortseq/util.pyx'],
               extra_compile_args=short_seq_common_compile_args,
               language='c++'),
-    Extension("ShortSeq.fast_read",
-              sources=['ShortSeq/fast_read.pyx'],
+    Extension("shortseq.fast_read",
+              sources=['shortseq/fast_read.pyx'],
               extra_compile_args=short_seq_common_compile_args,
               language='c++'),
-    Extension("ShortSeq.umi.umi",
-              sources=['ShortSeq/umi/umi.pyx'],
+    Extension("shortseq.umi.umi",
+              sources=['shortseq/umi/umi.pyx'],
               extra_compile_args=short_seq_common_compile_args,
               language='c++'),
 ]

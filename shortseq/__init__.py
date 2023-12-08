@@ -1,4 +1,11 @@
-from .short_seq import ShortSeq, ShortSeqCounter, read_and_count_fastq
+from .short_seq import (
+    pack,
+    from_str,
+    from_bytes,
+    ShortSeqCounter,
+    read_and_count_fastq
+)
+
 from .short_seq_var import ShortSeqVar, get_domain_var
 from .short_seq_128 import ShortSeq128, get_domain_128
 from .short_seq_64 import ShortSeq64, get_domain_64

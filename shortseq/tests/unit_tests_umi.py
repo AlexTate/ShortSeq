@@ -1,6 +1,6 @@
 import unittest
 
-from ShortSeq.umi import *
+from shortseq.umi import *
 
 class MyTestCase(unittest.TestCase):
     def test_construct(self):

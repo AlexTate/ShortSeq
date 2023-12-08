@@ -12,7 +12,7 @@ cdef inline void _read_fastq_short_seqs(char* fname, vector[PyObject *] &out):
 
     while getline(&line, &l, cfile) != -1:
         if count % 2 == 0 and count % 4 != 0:
-            seq = ShortSeq._from_chars(line)
+            seq = sq._from_chars(line)
             Py_XINCREF(<PyObject *>seq)
             out.push_back(<PyObject *>seq)
 
