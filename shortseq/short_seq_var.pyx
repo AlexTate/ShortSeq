@@ -77,6 +77,9 @@ cdef class ShortSeqVar:
 
         return pop_cnt
 
+    def __sizeof__(self):
+        return sizeof(ShortSeqVar) + _length_to_block_num(self._length) * sizeof(uint64_t)
+
     def __repr__(self):
         # Clips the sequence to MAX_REPR_LEN characters to avoid overwhelming the debugger
         cdef unicode clipped_seq = _unmarshall_bytes_var(self._packed, MAX_REPR_LEN)
