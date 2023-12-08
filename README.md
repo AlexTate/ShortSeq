@@ -25,20 +25,31 @@ mamba install -c bioconda -c conda-forge shortseq
 ```python
 import shortseq as sq
 
-# Construct from PyUnicode
+# Construct from PyUnicode or PyBytes
 seq_str = "ATGC"
-seq_1 = sq.pack(seq_str)
-
-# Or, construct from PyBytes
 seq_bytes = b"ATGC"
+seq_1 = sq.pack(seq_str)
 seq_2 = sq.pack(seq_bytes)
 
 # Verify outputs (optional)
-assert seq_1 == seq_2
-assert seq_str == str(seq_1) == str(seq_2)
-assert len(seq_str) == len(seq_1) == len(seq_2)
+assert seq_1 == seq_2 == seq_str
+assert len(seq_1) == len(seq_2) == len(seq_str)
 
-# Count unique sequences
+#          TATTA G CGATTGACAGTTGTCCTGTAATAACG C CGGGTAAATTTGC C G
+#          TATTA C CGATTGACAGTTGTCCTGTAATAACG G CGGGTAAATTTGC T G
+seq_3 = sq.pack("TATTAGCGATTGACAGTTGTCCTGTAATAACGCCGGGTAAATTTGCCG")
+seq_4 = sq.pack("TATTACCGATTGACAGTTGTCCTGTAATAACGGCGGGTAAATTTGCTG")
+seq_str = str(seq_4)
+
+# Slice and subscript
+assert seq_4[5:15] == seq_str[5:15]
+assert seq_4[-2] == seq_str[-2]
+
+# Vectorized hamming distance (differing bases)
+hammd = sum(a!=b for a, b in zip(seq_3, seq_4))
+assert seq_3 ^ seq_4 == hammd == 3
+
+# Count unique sequences similar to collections.Counter
 from shortseq import ShortSeqCounter
 counts = ShortSeqCounter([seq_bytes] * 10)
 assert counts == {sq.pack("ATGC"): 10}
