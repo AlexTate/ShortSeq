@@ -308,10 +308,8 @@ class ShortSeqVarTests(unittest.TestCase):
         assert seq_1 == seq_2 == seq_str
         assert len(seq_1) == len(seq_2) == len(seq_str)
 
-        #          TATTA G CGATTGACAGTTGTCCTGTAATAACG C CGGGTAAATTTGC C G
-        #          TATTA C CGATTGACAGTTGTCCTGTAATAACG G CGGGTAAATTTGC T G
         seq_3 = sq.pack("TATTAGCGATTGACAGTTGTCCTGTAATAACGCCGGGTAAATTTGCCG")
-        seq_4 = sq.pack("TATTACCGATTGACAGTTGTCCTGTAATAACGGCGGGTAAATTTGCTG")
+        seq_4 = sq.pack("TATTACCGATTGACAGTTGTCCTGTAATAACGGCGGGTAAATTTGCTG")  # 5M1X26M1X13M1X1M
         seq_str = str(seq_4)
 
         # Slice and subscript
