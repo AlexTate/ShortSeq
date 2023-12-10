@@ -22,6 +22,9 @@ jobs:
           - 3.9
           - 3.8
     steps:
+      - name: Print agent CPU info
+        if: runner.os == 'macOS'
+        run: sysctl -a machdep.cpu
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
