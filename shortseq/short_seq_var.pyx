@@ -179,9 +179,15 @@ cdef inline uint64_t _marshall_bytes_pext_u64(uint64_t block, uint8_t* &seq_byte
 
     cdef:
         uint64_t* sequence = reinterpret_cast[llstr](seq_bytes)
+        char* nonbase_ptr
         size_t i
 
     for i in reversed(range(n_pext)):
+        chunk = sequence[i]
+        if not _bloom_filter_64(chunk):
+            nonbase_ptr = reinterpret_cast[cstr](&chunk)
+            raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 8, NULL)}")
+
         block = (block << 16) | _pext_u64(sequence[i], pext_mask_64)
 
     return block
@@ -195,9 +201,15 @@ cdef inline uint64_t _marshall_bytes_pext_u32(uint64_t block, uint8_t* &seq_byte
 
     cdef:
         uint32_t* sequence = reinterpret_cast[istr](seq_bytes)
+        char* nonbase_ptr
         size_t i
 
     for i in reversed(range(n_pext)):
+        chunk = sequence[i]
+        if not _bloom_filter_32(chunk):
+            nonbase_ptr = reinterpret_cast[cstr](&chunk)
+            raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 4, NULL)}")
+
         block = (block << 8) | _pext_u32(sequence[i], pext_mask_32)
 
     return block
@@ -206,13 +218,15 @@ cdef inline uint64_t _marshall_bytes_pext_u32(uint64_t block, uint8_t* &seq_byte
 cdef inline uint64_t _marshall_bytes_serial(uint64_t block, uint8_t* &seq_bytes, size_t length) nogil:
     """Packs bases one at a time (sequential, non-vector) into the uint64_t `block`"""
 
-    cdef uint8_t seq_char
+    cdef char* nonbase_ptr
     cdef uint8_t i
 
     for i in reversed(range(length)):
         seq_char = seq_bytes[i]
         if not is_base(seq_char):
-            raise Exception(f"Unsupported base character: {seq_char}")
+            nonbase_ptr = reinterpret_cast[cstr](&seq_char)
+            raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 1, NULL)}")
+
         block = (block << 2) | table_91[seq_char]
 
     return block

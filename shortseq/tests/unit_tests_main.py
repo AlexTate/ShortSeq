@@ -334,6 +334,20 @@ class ShortSeqVarTests(unittest.TestCase):
         self.assertEqual(sys.getsizeof(seq_min), 56)
         self.assertEqual(sys.getsizeof(seq_max), 288)
 
+    """Do ShortSeqVars detect incompatible sequence characters?"""
+
+    def test_incompatible_seq_chars(self):
+        problems = ["N", "*"]
+        for length in range(MIN_VAR_NT, MAX_VAR_NT):
+            sample = rand_sequence(length - 1)
+            for prob in problems:
+                try:
+                    with self.assertRaisesRegex(Exception, "Unsupported base character: "):
+                        sq.pack(sample + prob)
+                except Exception as e:
+                    print_var_seq_pext_chunks(sample + prob)
+                    print(f"Failed at length {length + 1} with {prob}")
+                    raise e
 
 
 if __name__ == '__main__':
