@@ -1,4 +1,5 @@
 import unittest
+import sys
 
 from random import randint
 
@@ -64,6 +65,23 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
         for prob in problems_64 + problems_128:
             with self.assertRaisesRegex(Exception, "Unsupported base character"):
                 sq.pack(prob)
+
+    """Are min and max length ShortSeqs the correct size?"""
+
+    def test_size(self):
+        # ShortSeq64
+        seq_min = sq.pack(rand_sequence(MIN_64_NT))
+        seq_max = sq.pack(rand_sequence(MAX_64_NT))
+
+        self.assertEqual(sys.getsizeof(seq_min), 32)
+        self.assertEqual(sys.getsizeof(seq_max), 32)
+
+        # ShortSeq128
+        seq_min = sq.pack(rand_sequence(MIN_128_NT))
+        seq_max = sq.pack(rand_sequence(MAX_128_NT))
+
+        self.assertEqual(sys.getsizeof(seq_min), 48)
+        self.assertEqual(sys.getsizeof(seq_max), 48)
 
     """Checks that randomly generated sequences encode and decode correctly
         for the entire valid range of lengths."""
@@ -278,6 +296,43 @@ class ShortSeqVarTests(unittest.TestCase):
             b = rand_sequence(length)
 
             self.assertEqual(sq.pack(a) ^ sq.pack(b), str_ham(a, b))
+
+    def test_readme(self):
+        # Construct from PyUnicode or PyBytes
+        seq_str = "ATGC"
+        seq_bytes = b"ATGC"
+        seq_1 = sq.pack(seq_str)
+        seq_2 = sq.pack(seq_bytes)
+
+        # Verify outputs (optional)
+        assert seq_1 == seq_2 == seq_str
+        assert len(seq_1) == len(seq_2) == len(seq_str)
+
+        seq_3 = sq.pack("TATTAGCGATTGACAGTTGTCCTGTAATAACGCCGGGTAAATTTGCCG")
+        seq_4 = sq.pack("TATTACCGATTGACAGTTGTCCTGTAATAACGGCGGGTAAATTTGCTG")  # 5M1X26M1X13M1X1M
+        seq_str = str(seq_4)
+
+        # Slice and subscript
+        assert seq_4[5:15] == seq_str[5:15]
+        assert seq_4[-2] == seq_str[-2]
+
+        # Vectorized hamming distance (differing bases)
+        hammd = sum(a!=b for a, b in zip(seq_3, seq_4))
+        assert seq_3 ^ seq_4 == hammd == 3
+
+        # Count unique sequences similar to collections.Counter
+        from shortseq import ShortSeqCounter
+        counts = ShortSeqCounter([seq_bytes] * 10)
+        assert counts == {sq.pack("ATGC"): 10}
+
+    """Are min and max length ShortSeqVars the correct size?"""
+
+    def test_size(self):
+        seq_min = sq.pack(rand_sequence(MIN_VAR_NT))
+        seq_max = sq.pack(rand_sequence(MAX_VAR_NT))
+
+        self.assertEqual(sys.getsizeof(seq_min), 56)
+        self.assertEqual(sys.getsizeof(seq_max), 288)
 
 
 
