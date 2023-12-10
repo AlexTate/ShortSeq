@@ -2,13 +2,13 @@
 
 ShortSeqs are compact and efficient Python objects that hold short sequences while using up to 73% less memory compared to built-in types. They are prehashed and comparable, they support slicing and indexing, and they easily convert back to their original string form.
 
-| Sequence Length | PyUnicode Size<sup>*</sup> | PyBytes Size<sup>*</sup> |  ShortSeq Size<sup>*</sup> | % Mem. Reduction |
-|-----------------|----------------------------|--------------------------|---------------------------:|------------------|
-| 0-32 nt         | 56-88 bytes                | 40-72 bytes              |           32 bytes (fixed) | **20-64%**       |
-| 33-64 nt        | 88-120 bytes               | 72-104 bytes             |           48 bytes (fixed) | **33-60%**       |
-| 65-1024 nt      | 120-1080 bytes             | 104-1064 bytes           |               48-288 bytes | **53-73%**       |
+| Sequence Length | PyUnicode Size | PyBytes Size | ShortSeq Size | % Reduced |
+|-----------------|----------------------------|--------------------------|--------------------------:|--------------------|
+| 0-32 nt         | 56-88 bytes                | 40-72 bytes              |          32 bytes (fixed) | **43-64%**         |
+| 33-64 nt        | 88-120 bytes               | 72-104 bytes             |          48 bytes (fixed) | **45-60%**         |
+| 65-1024 nt      | 120-1080 bytes             | 104-1064 bytes           |              56-288 bytes | **53-73%**         |
 
-<sup>* Object sizes were measured on Python 3.10 using `asizeof()` from the `pympler` package.</sup>
+<sup>* Object sizes were measured on Python 3.10 using `asizeof()` from the `pympler` package. % Reduced is PyUnicode vs. ShortSeq</sup>
 
 In the table above, you can see that Python's memory representation of DNA sequences is larger than a C-style `char *` array, which would only need one byte per base. Using Cython we can move some of this memory representation out of Python space and into C space for faster facilities and a more compact bitwise representation.  
 
@@ -25,20 +25,29 @@ mamba install -c bioconda -c conda-forge shortseq
 ```python
 import shortseq as sq
 
-# Construct from PyUnicode
+# Construct from PyUnicode or PyBytes
 seq_str = "ATGC"
-seq_1 = sq.pack(seq_str)
-
-# Or, construct from PyBytes
 seq_bytes = b"ATGC"
+seq_1 = sq.pack(seq_str)
 seq_2 = sq.pack(seq_bytes)
 
 # Verify outputs (optional)
-assert seq_1 == seq_2
-assert seq_str == str(seq_1) == str(seq_2)
-assert len(seq_str) == len(seq_1) == len(seq_2)
+assert seq_1 == seq_2 == seq_str
+assert len(seq_1) == len(seq_2) == len(seq_str)
 
-# Count unique sequences
+seq_3 = sq.pack("TATTAGCGATTGACAGTTGTCCTGTAATAACGCCGGGTAAATTTGCCG")
+seq_4 = sq.pack("TATTACCGATTGACAGTTGTCCTGTAATAACGGCGGGTAAATTTGCTG")  # 5M1X26M1X13M1X1M
+seq_str = str(seq_4)
+
+# Slice and subscript
+assert seq_4[5:15] == seq_str[5:15]
+assert seq_4[-2] == seq_str[-2]
+
+# Vectorized hamming distance (differing bases)
+hammd = sum(a!=b for a, b in zip(seq_3, seq_4))
+assert seq_3 ^ seq_4 == hammd == 3
+
+# Count unique sequences similar to collections.Counter
 from shortseq import ShortSeqCounter
 counts = ShortSeqCounter([seq_bytes] * 10)
 assert counts == {sq.pack("ATGC"): 10}
