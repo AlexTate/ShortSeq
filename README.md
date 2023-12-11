@@ -88,7 +88,7 @@ The time it takes to convert a list of PyBytes sequences to a list of ShortSeqs 
 
 ### Longer Sequences, Featuring SIMD Encoding
 
-Longer sequences (65 - 1024 bases) are experimentally supported. These sequences are encoded using SIMD instructions which convert 8 bases at a time for higher throughput. However, sequences of this length are not checked for invalid base characters; it is the user's responsibility to ensure that valid DNA strings are used.
+Longer sequences (65 - 1024 bases) are experimentally supported. These sequences are encoded using SIMD instructions which convert 8 bases at a time for higher throughput.
 
 
 ### Acknowledgements

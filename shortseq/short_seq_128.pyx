@@ -93,13 +93,14 @@ cdef class ShortSeq128:
 @cython.boundscheck(False)
 cdef inline uint128_t _marshall_bytes_128(uint8_t* sequence, uint8_t length, bint with_length = False) nogil:
     cdef uint128_t hashed = 0LL
-    cdef uint8_t seq_char
+    cdef char* nonbase_ptr
     cdef uint8_t i
 
     for i in reversed(range(length)):
         seq_char = sequence[i]
         if not is_base(seq_char):
-            raise Exception(f"Unsupported base character: {seq_char}")
+            nonbase_ptr = reinterpret_cast[cstr](&seq_char)
+            raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 1, NULL)}")
         hashed = (hashed << 2) | table_91[seq_char]
 
     if with_length:

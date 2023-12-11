@@ -26,3 +26,29 @@ cdef uint64_t _marshall_bytes_pext_u64(uint64_t block, uint8_t* &seq_bytes, size
 cdef uint64_t _marshall_bytes_pext_u32(uint64_t block, uint8_t* &seq_bytes, size_t n_pext) nogil
 cdef uint64_t _marshall_bytes_serial(uint64_t block, uint8_t* &seq_bytes, size_t length) nogil
 cdef unicode _unmarshall_bytes_var(uint64_t* enc_seq, size_t length, size_t start_block=*, size_t offset=*)
+
+"""Validates ASCII bases 4 at a time allowing only uppercase ATGC"""
+
+cdef inline bint _bloom_filter_32(uint32_t block) nogil:
+    cdef uint32_t shifts = block & 0x3F3F3F3FL
+    cdef uint64_t query = ((1UL << ((shifts >> 0) & 0xFF))  |
+                           (1UL << ((shifts >> 8) & 0xFF))  |
+                           (1UL << ((shifts >> 16) & 0xFF)) |
+                           (1UL << ((shifts >> 24) & 0xFF)))
+
+    return (bloom & query) == 0L
+
+"""Validates ASCII bases 8 at a time allowing only uppercase ATGC"""
+
+cdef inline uint64_t _bloom_filter_64(uint64_t block) nogil:
+    cdef uint64_t shifts = block & 0x3F3F3F3F3F3F3F3FLL
+    cdef uint64_t query = ((1ULL << ((shifts >> 0) & 0xFF))  |
+                           (1ULL << ((shifts >> 8) & 0xFF))  |
+                           (1ULL << ((shifts >> 16) & 0xFF)) |
+                           (1ULL << ((shifts >> 24) & 0xFF)) |
+                           (1ULL << ((shifts >> 32) & 0xFF)) |
+                           (1ULL << ((shifts >> 40) & 0xFF)) |
+                           (1ULL << ((shifts >> 48) & 0xFF)) |
+                           (1ULL << ((shifts >> 56) & 0xFF)))
+
+    return (bloom & query) == 0LL

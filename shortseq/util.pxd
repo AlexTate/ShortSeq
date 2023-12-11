@@ -8,6 +8,8 @@ from cpython.ref cimport Py_XDECREF, Py_XINCREF
 from cpython.slice cimport PySlice_GetIndicesEx, PySlice_AdjustIndices
 from cpython.unicode cimport PyUnicode_DecodeASCII
 
+# For Cython, this is necessary for using these types in brackets (reinterpret_cast)
+ctypedef char* cstr
 
 # Constants
 cdef uint8_t mask
