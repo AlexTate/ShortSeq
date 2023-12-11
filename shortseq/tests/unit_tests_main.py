@@ -317,7 +317,7 @@ class ShortSeqVarTests(unittest.TestCase):
         assert seq_4[-2] == seq_str[-2]
 
         # Vectorized hamming distance (differing bases)
-        hammd = sum(a!=b for a, b in zip(seq_3, seq_4))
+        hammd = sum(a != b for a, b in zip(seq_3, seq_4))
         assert seq_3 ^ seq_4 == hammd == 3
 
         # Count unique sequences similar to collections.Counter
