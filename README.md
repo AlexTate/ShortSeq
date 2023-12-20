@@ -1,6 +1,6 @@
 # shortseq
 
-ShortSeqs are compact and efficient Python objects that hold short sequences while using up to 73% less memory compared to built-in types. They are prehashed and comparable, they support slicing, indexing, and a variety of vectorized operations, and they easily convert back to their original string form.
+ShortSeqs are compact and efficient Python objects that hold short sequences while using up to 73% less memory compared to built-in types. They are prehashed and comparable, they support slicing, indexing, and a variety of vectorized operations, and they easily convert back to their original string form. Their memory advantage is shown in the table below.
 
 | Sequence Length | PyUnicode Size | PyBytes Size | ShortSeq Size | % Reduced |
 |-----------------|----------------------------|--------------------------|--------------------------:|--------------------|
@@ -68,25 +68,34 @@ assert counts == {sq.pack("ATGC"): 10}
 However, AMD processors [prior to Zen 3](https://en.wikipedia.org/wiki/X86_Bit_manipulation_instruction_set#cite_ref-12) (2020) aren't recommended for 65-1024 nt sequences if runtime performance is a high priority.
 
 
-### Performance
+## Performance
 
-![from_bytes_time.svg](doc/plots/from_bytes_time.svg)
+<p align="center">
+  <img src="doc/plots/mem_by_length.svg" alt="Memory usage by length"/>
+</p>
 
-ShortSeq construction involves encoding the sequence string into a compressed binary representation, which is an O(n) operation, whereas `x.decode()` and `np.char.asarray()` are O(1) because they essentially copy the object's internal buffer.
+Note that the measurement of Gzip Bytes is the _length_ in bytes of the compressed sequence at maximum compression (level 9), which is much smaller than the actual PyBytes object that `gzip.compress()` returns. This footprint is therefore unobtainable when using Python's gzip module, and instead serves as a theoretical lower bound for the memory footprint of a compressed sequence.
 
-[View source: TimeBenchmarks.test_construction_from_bytes()](shortseq/tests/benchmark.py)
+[View source: MemoryBenchmarks.test_mem_by_length()](shortseq/tests/benchmark.py#L44)
+</br></br>
 
-![mem_by_length.svg](doc/plots/mem_by_length.svg)
-
-Note that the measurement of Gzip Bytes is the _length_ of bytes in the compressed sequence at maximum compression (level 9), which is much smaller than the actual PyBytes object that `gzip.compress()` returns. This footprint is therefore unobtainable when using Python's gzip module, and instead serves as a theoretical lower bound for the memory footprint of a compressed sequence.
-
-[View source: MemoryBenchmarks.test_mem_by_length()](shortseq/tests/benchmark.py)
-
-![edit_distance_time.svg](doc/plots/edit_distance_time.svg)
+<p align="center">
+  <img src="doc/plots/edit_distance_time.svg" alt="Edit distance calculation time by length"/>
+</p>
 
 Edit distance calculation is extremely efficient for ShortSeqs and can be performed in near-constant time. This is a huge advantage over other sequence types, which require O(n) time to compute the edit distance.
 
-[View source: TimeBenchmarks.test_hamming_distance()](shortseq/tests/benchmark.py)
+[View source: TimeBenchmarks.test_hamming_distance()](shortseq/tests/benchmark.py#L121)
+</br></br>
+
+<p align="center">
+  <img src="doc/plots/from_bytes_time.svg" alt="Construction time from PyBytes input"/>
+</p>
+
+ShortSeq construction involves encoding the sequence string into a compressed binary representation, which is an O(n) operation, whereas `x.decode()` and `np.char.asarray()` are O(1) because they essentially copy the object's internal buffer.
+
+[View source: TimeBenchmarks.test_construction_from_bytes()](shortseq/tests/benchmark.py#L84)
+</br></br>
 
 
 ### Encoding (Compression)
@@ -105,7 +114,7 @@ This table shows how each nucleotide is represented in ASCII and how it's ordina
 
 ### Decoding
 
-ShortSeqs are decoded back to their original sequence strings "lazily", i.e. it happens only when you ask and the result isn't cached in the object, so it has to be recomputed with each request. However, ShortSeqs retain the original string's length and can be compared to each other for equality **without** decoding.
+ShortSeqs are decoded back to their original sequence strings "lazily", i.e. it happens only when you ask and the result isn't cached in the object, so it has to be recomputed with each request. However, ShortSeqs retain the original string's length and can be compared to each other for equality and edit distance **without** decoding.
 
 
 ### Acknowledgements
