@@ -1,6 +1,6 @@
 # shortseq
 
-ShortSeqs are compact and efficient Python objects that hold short sequences while using up to 73% less memory compared to built-in types. They are prehashed and comparable, they support slicing and indexing, and they easily convert back to their original string form.
+ShortSeqs are compact and efficient Python objects that hold short sequences while using up to 73% less memory compared to built-in types. They are prehashed and comparable, they support slicing, indexing, and a variety of vectorized operations, and they easily convert back to their original string form.
 
 | Sequence Length | PyUnicode Size | PyBytes Size | ShortSeq Size | % Reduced |
 |-----------------|----------------------------|--------------------------|--------------------------:|--------------------|
@@ -10,13 +10,19 @@ ShortSeqs are compact and efficient Python objects that hold short sequences whi
 
 <sup>* Object sizes were measured on Python 3.10 using `asizeof()` from the `pympler` package. % Reduced is PyUnicode vs. ShortSeq</sup>
 
-In the table above, you can see that Python's memory representation of DNA sequences is larger than a C-style `char *` array, which would only need one byte per base. Using Cython we can move some of this memory representation out of Python space and into C space for faster facilities and a more compact bitwise representation.  
-
 
 ### Installation
 
 ```shell
 mamba install -c bioconda -c conda-forge shortseq
+```
+
+However, I strongly recommend compiling the project from source. The instructions that make ShortSeqs fast are very specific to your CPU's microarchitecture, so the prebuilt binaries on Bioconda are not optimized for your machine. To compile from source:
+
+```shell
+git clone https://github.com/AlexTate/shortseq.git
+cd shortseq
+python -m pip install .
 ```
 
 
@@ -62,6 +68,27 @@ assert counts == {sq.pack("ATGC"): 10}
 However, AMD processors [prior to Zen 3](https://en.wikipedia.org/wiki/X86_Bit_manipulation_instruction_set#cite_ref-12) (2020) aren't recommended for 65-1024 nt sequences if runtime performance is a high priority.
 
 
+### Performance
+
+![from_bytes_time.svg](doc/plots/from_bytes_time.svg)
+
+ShortSeq construction involves encoding the sequence string into a compressed binary representation, which is an O(n) operation, whereas `x.decode()` and `np.char.asarray()` are O(1) because they essentially copy the object's internal buffer.
+
+[View source: TimeBenchmarks.test_construction_from_bytes()](shortseq/tests/benchmark.py)
+
+![mem_by_length.svg](doc/plots/mem_by_length.svg)
+
+Note that the measurement of Gzip Bytes is the _length_ of bytes in the compressed sequence at maximum compression (level 9), which is much smaller than the actual PyBytes object that `gzip.compress()` returns. This footprint is therefore unobtainable when using Python's gzip module, and instead serves as a theoretical lower bound for the memory footprint of a compressed sequence.
+
+[View source: MemoryBenchmarks.test_mem_by_length()](shortseq/tests/benchmark.py)
+
+![edit_distance_time.svg](doc/plots/edit_distance_time.svg)
+
+Edit distance calculation is extremely efficient for ShortSeqs and can be performed in near-constant time. This is a huge advantage over other sequence types, which require O(n) time to compute the edit distance.
+
+[View source: TimeBenchmarks.test_hamming_distance()](shortseq/tests/benchmark.py)
+
+
 ### Encoding (Compression)
 
 We represent DNA with four symbols: A, C, T, and G. Generally speaking, when these symbols are represented in computer systems, each symbol takes up one byte or 8 bits of memory because these letters are part of a symbol system that requires 7/8 of those bits for its range. These symbols can instead be represented ordinally as 0, 1, 2, and 3, which only requires 2 bits, allowing us to pack 4 nucleotides into each byte rather than just one.
@@ -81,16 +108,6 @@ This table shows how each nucleotide is represented in ASCII and how it's ordina
 ShortSeqs are decoded back to their original sequence strings "lazily", i.e. it happens only when you ask and the result isn't cached in the object, so it has to be recomputed with each request. However, ShortSeqs retain the original string's length and can be compared to each other for equality **without** decoding.
 
 
-### Overhead
-
-The time it takes to convert a list of PyBytes sequences to a list of ShortSeqs is roughly the same as converting the list to PyUnicode sequences. The time it takes to count unique sequences in each of these lists (ShortSeq vs. PyUnicode) is also roughly the same.
-
-
-### Longer Sequences, Featuring SIMD Encoding
-
-Longer sequences (65 - 1024 bases) are experimentally supported. These sequences are encoded using SIMD instructions which convert 8 bases at a time for higher throughput.
-
-
 ### Acknowledgements
 
-Huge thanks to the Montgomery Lab at Colorado State University. This was an experiment of mine that was started in pursuit of faster sequence deduplication and optimization while working on [tinyRNA](https://www.github.com/MontgomeryLab/tinyRNA).
+Huge thanks to the Montgomery Lab at Colorado State University. This began as an experiment of mine while in pursuit of faster sequence deduplication and optimization for [tinyRNA](https://www.github.com/MontgomeryLab/tinyRNA).

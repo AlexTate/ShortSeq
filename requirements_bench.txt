@@ -1,0 +1,5 @@
+matplotlib
+psutil
+pympler
+scipy
+umi_tools
