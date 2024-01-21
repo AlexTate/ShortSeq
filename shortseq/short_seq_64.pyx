@@ -87,7 +87,8 @@ cdef class ShortSeq64:
 
     def __xor__(self, ShortSeq64 other):
         if self._length != other._length:
-            raise Exception("Hamming distance requires sequences of equal length")
+            raise Exception(f"Hamming distance requires sequences of equal length "
+                            f"({self._length} != {other._length})")
 
         cdef uint64_t comp = self._packed ^ (<ShortSeq64>other)._packed
         comp = ((comp >> 1) | comp) & 0x5555555555555555LL  # Some bases XOR to 0x3; collapse these inplace to 0x1

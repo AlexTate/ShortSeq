@@ -69,7 +69,8 @@ cdef class ShortSeq128:
 
     def __xor__(self, ShortSeq128 other):
         if self._length != other._length:
-            raise Exception("Hamming distance requires sequences of equal length")
+            raise Exception(f"Hamming distance requires sequences of equal length "
+                            f"({self._length} != {other._length})")
 
         cdef uint128_t xor = self._packed ^ (<ShortSeq128> other)._packed
         cdef uint64_t lo = <uint64_t> xor

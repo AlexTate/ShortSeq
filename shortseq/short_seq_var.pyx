@@ -63,6 +63,10 @@ cdef class ShortSeqVar:
         return _unmarshall_bytes_var(self._packed, self._length)
 
     def __xor__(self, ShortSeqVar other):
+        if self._length != other._length:
+            raise Exception(f"Hamming distance requires sequences of equal length "
+                            f"({self._length} != {other._length})")
+
         cdef uint64_t block, block_other, block_comp
         cdef size_t n_blocks = _length_to_block_num(self._length)
         cdef size_t pop_cnt = 0
