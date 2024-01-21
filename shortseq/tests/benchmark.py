@@ -43,9 +43,13 @@ class MemoryBenchmarks(unittest.TestCase):
 
     def test_mem_by_length(self):
         """Memory usage by sequence length is measured using asizeof() for
-        each object type. NOTE: the measurement of Gzip Bytes is the number
-        of bytes in the compressed sequence, NOT the size of the PyBytes
-        object that gzip.compress() returns."""
+        each object type. NOTE:
+            1) The measurement of Gzip Bytes is the number of bytes in
+               the compressed sequence, NOT the size of the PyBytes
+               object that gzip.compress() returns.
+            2) The NumPy array is constructed as a tokenized form of the
+               sequence that is amenable to edit distance calculation.
+        """
 
         title = "Memory Usage by Object Type"
         lab_x = "Sequence Length"
@@ -59,7 +63,7 @@ class MemoryBenchmarks(unittest.TestCase):
 
         for length, seqs in self.data.items():
             mem_sq[length] = asizeof(sq.pack(seqs[0]))
-            mem_np[length] = asizeof(np.asarray(seqs[0]))
+            mem_np[length] = asizeof(np.char.asarray(seqs[0], itemsize=1))
             mem_un[length] = asizeof(str(seqs[0]))
             mem_by[length] = asizeof(seqs[0])
             mem_gz[length] = len(gzip.compress(seqs[0]))
@@ -230,6 +234,8 @@ def plot_results(sets: FinalResults, title: str, x_label: str, y_label: str, **k
     ax: plt.Axes; fig: plt.Figure
     plt.rcParams['figure.dpi'] = 300
     if kwargs.get('log_scale', False):
+        ax.tick_params(which="both", width=1.5, axis='y')
+        ax.tick_params(which="major", length=4, axis='y')
         ax.set_yscale('log')
 
     for label, values in sets.items():
