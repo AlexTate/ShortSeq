@@ -1,12 +1,12 @@
 # cython: language_level = 3, language=c++, profile=False, linetrace=False
-import time
 
 import cython  # For function decorators
 from cython.operator cimport dereference as deref
 
 # Singleton Values
 cdef ShortSeq64 empty = ShortSeq64.__new__(ShortSeq64)
-cdef object one = PyLong_FromSize_t(1)
+# Generate 1-, 2-, and 3-mer singletons table
+# kmers = ["".join(x) for n in range(1, 4) for x in itertools.product(*(["ATGC"] * n))]
 
 # === Python constructors ===============================================================
 
@@ -70,68 +70,17 @@ cdef inline object _new(char* sequence, size_t length):
         (<ShortSeqVar> outvar)._length = length
         return outvar
     else:
-        raise Exception("Sequences longer than 1024 bases are not supported.")
+        raise Exception(f"Sequences longer than {MAX_VAR_NT} bases are not supported.")
 
+cdef object _from_sliced_bytes(uint64_t* packed, size_t offset, size_t length):
+    """Called only when slices of ShortSeqVar or ShortSeq128 are of sufficient
+    length to require a class downgrade. Slices that result in the same object
+    type (as determined by length) are constructed class-local instead of here."""
 
-cdef class ShortSeqCounter(dict):
-    def __init__(self, source=None):
-        super().__init__()
+    pass
 
-        if type(source) is list:
-            self._count_py_bytes_list(source)
-
-    def __setitem__(self, key, val):
-        if type(key) not in (ShortSeq64, ShortSeq128, ShortSeqVar):
-            raise TypeError(f"{self.__class__} does not support {type(key)} keys")
-        PyDict_SetItem(self, key, val)
-
-    @cython.boundscheck(False)
-    cdef _count_py_bytes_list(self, list it):
-        cdef bytes seqbytes
-
-        for i in range(len(it)):
-            seqbytes = <bytes> PyList_GET_ITEM(it, i)
-            seq = _from_py_bytes(seqbytes)
-            self._count_sequence(seq)
-
-    cdef _count_short_seq_vector(self, vector[PyObject *] &short_seqs):
-        for seq in short_seqs:
-            self._count_sequence(<object>seq)
-
-    @cython.boundscheck(False)
-    cdef _count_chars_vector(self, vector[char *] &raw_lines):
-        for seqchars in raw_lines:
-            seq = _from_chars(seqchars)
-            self._count_sequence(seq)
-
-    cdef inline _count_sequence(self, object seq):
-        cdef PyObject *oldval
-
-        seqhash = deref(<ShortSeqGeneric*>seq)._packed
-        oldval = _PyDict_GetItem_KnownHash(self, seq, seqhash)
-
-        if oldval == NULL:
-            if PyErr_Occurred():
-                raise Exception("Something went wrong while retrieving sequence count.")
-            if _PyDict_SetItem_KnownHash(self, seq, one, seqhash) < 0:
-                raise Exception("Something went wrong while setting a new sequence count.")
-        else:
-            if _PyDict_SetItem_KnownHash(self, seq, <object>oldval + 1, seqhash) < 0:
-                raise Exception("Something went wrong while setting an incremented sequence count.")
-
-
-cpdef ShortSeqCounter read_and_count_fastq(object filename):
-    cdef ShortSeqCounter counts = ShortSeqCounter()
-    cdef vector[PyObject *] seqs
-    # cdef vector[char *] seqs
-
-    t1 = time.time()
-    _read_fastq_short_seqs(filename.encode('utf-8'), seqs)
-    # _read_fastq_chars(filename.encode('utf-8'), seqs)
-    t2 = time.time()
-    counts._count_short_seq_vector(seqs)
-    # counts._count_chars_vector(seqs)
-    t3 = time.time()
-
-    print(f"{t2-t1:.2f}s to read {seqs.size()} total seqs, and {t3 - t2:.2f}s to count {len(counts)} unique sequences")
-    return counts
+cdef inline ShortSeq64 _subscript(uint64_t* packed, size_t index):
+    cdef ShortSeq64 out = ShortSeq64.__new__(ShortSeq64)
+    out._packed = _bzhi_u64(deref(packed) >> (index * 2), 3)
+    out._length = 1
+    return out
