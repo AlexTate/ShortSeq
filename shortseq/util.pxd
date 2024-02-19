@@ -8,8 +8,14 @@ from cpython.ref cimport Py_XDECREF, Py_XINCREF
 from cpython.slice cimport PySlice_GetIndicesEx, PySlice_AdjustIndices
 from cpython.unicode cimport PyUnicode_DecodeASCII
 
-# For Cython, this is necessary for using these types in brackets (reinterpret_cast)
+# For Cython, this is necessary when using these types in brackets (reinterpret_cast)
+ctypedef uint64_t* llstr
+ctypedef uint32_t* istr
 ctypedef char* cstr
+
+# Mask values for pext instructions
+cdef uint64_t pext_mask_64
+cdef uint32_t pext_mask_32
 
 # Constants
 cdef uint8_t mask
@@ -84,7 +90,35 @@ This is a temporary fix until I find a better solution
 """
 
 cdef inline bint is_base(uint8_t char) nogil:
-    return bloom & (1 << (char & 63)) == 0
+    return bloom & (1ULL << (char & 63)) == 0
+
+
+"""Validates ASCII bases 4 at a time"""
+
+cdef inline bint _bloom_filter_32(uint32_t block) noexcept nogil:
+    cdef uint32_t shifts = block & 0x3F3F3F3FL
+    cdef uint64_t query = ((1ULL << ((shifts >> 0)  & 0xFF)) |
+                           (1ULL << ((shifts >> 8)  & 0xFF)) |
+                           (1ULL << ((shifts >> 16) & 0xFF)) |
+                           (1ULL << ((shifts >> 24) & 0xFF)))
+
+    return (bloom & query) == 0
+
+
+"""Validates ASCII bases 8 at a time"""
+
+cdef inline uint64_t _bloom_filter_64(uint64_t block) noexcept nogil:  # nolint
+    cdef uint64_t shifts = block & 0x3F3F3F3F3F3F3F3FLL
+    cdef uint64_t query = ((1ULL << ((shifts >> 0)  & 0xFF)) |
+                           (1ULL << ((shifts >> 8)  & 0xFF)) |
+                           (1ULL << ((shifts >> 16) & 0xFF)) |
+                           (1ULL << ((shifts >> 24) & 0xFF)) |
+                           (1ULL << ((shifts >> 32) & 0xFF)) |
+                           (1ULL << ((shifts >> 40) & 0xFF)) |
+                           (1ULL << ((shifts >> 48) & 0xFF)) |
+                           (1ULL << ((shifts >> 56) & 0xFF)))
+
+    return (bloom & query) == 0
 
 
 """

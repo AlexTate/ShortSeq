@@ -12,9 +12,11 @@ cdef inline (size_t, size_t) _divmod(size_t dividend, size_t divisor):
     return div_res, mod_res
 
 """
-These values must be assigned here in order for the definition
-(and not just the declaration) to be correctly cimported
+CONSTANTS
 """
+
+cdef uint64_t pext_mask_64 = 0x0606060606060606
+cdef uint32_t pext_mask_32 = 0x06060606
 
 cdef uint8_t[91] table_91 = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,

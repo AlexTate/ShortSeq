@@ -173,7 +173,6 @@ cdef uint64_t* _marshall_bytes_var(uint8_t* seq_bytes, size_t length):
 
     return hash_arr
 
-cdef uint64_t pext_mask_64 = 0x0606060606060606
 
 @cython.wraparound(False)
 cdef inline uint64_t _marshall_bytes_pext_u64(uint64_t block, uint8_t* &seq_bytes, size_t n_pext) nogil:
@@ -196,8 +195,6 @@ cdef inline uint64_t _marshall_bytes_pext_u64(uint64_t block, uint8_t* &seq_byte
 
     return block
 
-
-cdef uint32_t pext_mask_32 = 0x06060606
 
 @cython.wraparound(False)
 cdef inline uint64_t _marshall_bytes_pext_u32(uint64_t block, uint8_t* &seq_bytes, size_t n_pext) nogil:

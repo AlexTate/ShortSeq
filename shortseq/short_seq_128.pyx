@@ -24,6 +24,7 @@ Consider encoding length into lower 6 bits (representing up to 63):
     PyUnicode equivalent: 112 bytes (57% reduction)
 """
 
+# Constants
 MIN_128_NT = 33
 MAX_128_NT = 64
 
@@ -31,6 +32,7 @@ MAX_128_NT = 64
 def get_domain_128(): return MIN_128_NT, MAX_128_NT
 
 cdef class ShortSeq128:
+
     def __hash__(self):
         return <uint64_t>self._packed
 
@@ -92,32 +94,41 @@ cdef class ShortSeq128:
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.boundscheck(False)
-cdef inline uint128_t _marshall_bytes_128(uint8_t* sequence, uint8_t length, bint with_length = False) nogil:
-    cdef uint128_t hashed = 0LL
-    cdef char* nonbase_ptr
-    cdef uint8_t i
+cdef inline uint128_t _marshall_bytes_128(uint8_t* sequence, uint8_t length) nogil:
+    """Encodes the input sequence into a 128 bit integer using 2-bit encoding.
+    Note that from a high-level memory perspective, the layout of the resulting marshalled
+    bytes is more similar to that of ShortSeq64, which stores bases in a sequentially continuous
+    manner, than it is to ShortSeqVar, which stores bases in uint64_t array elements."""
 
-    for i in reversed(range(length)):
+    cdef:
+        uint64_t* wide_iter = reinterpret_cast[llstr](sequence)
+        uint64_t hi, lo
+        char* nonbase_ptr
+        uint8_t i
+
+    # Last 32 bases can be variable length. Handle them one at a time.
+    for i in reversed(range(32, length)):
         seq_char = sequence[i]
         if not is_base(seq_char):
             nonbase_ptr = reinterpret_cast[cstr](&seq_char)
             raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 1, NULL)}")
-        hashed = (hashed << 2) | table_91[seq_char]
+        hi = (hi << 2) | table_91[seq_char]
 
-    if with_length:
-        hashed = (hashed << 8) | length
+    # First 32 bases are always guaranteed. Handle them 8 at a time.
+    for i in reversed(range(4)):
+        seq_chunk = wide_iter[i]
+        if not _bloom_filter_64(seq_chunk):
+            nonbase_ptr = reinterpret_cast[cstr](&seq_chunk)
+            raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 1, NULL)}")
+        lo = (lo << 16) | _pext_u64(seq_chunk, pext_mask_64)
 
-    return hashed
+    return (<uint128_t>hi << 64) | <uint128_t>lo
 
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.boundscheck(False)
-cdef inline unicode _unmarshall_bytes_128(uint128_t enc_seq, uint8_t length = 0, bint with_length = False):
+cdef inline unicode _unmarshall_bytes_128(uint128_t enc_seq, uint8_t length):
     cdef uint8_t i
-
-    if with_length:
-        length = enc_seq & 0xFF
-        enc_seq >>= 8
 
     for i in range(length):
         out_ascii_buffer_64[i] = charmap[enc_seq & mask]
