@@ -3,6 +3,10 @@ import time
 
 from cython.operator cimport dereference as deref
 
+# Singleton Values
+one = PyLong_FromSize_t(1)
+
+
 cdef class ShortSeqCounter(dict):
     def __init__(self, source=None):
         super().__init__()

@@ -86,7 +86,7 @@ cpdef inline printbin(header, value, value_bitwidth, chunk_bitwidth):
 
 
 """
-This function uses a bloom filter to quickly check if a given
+These functions use a bloom filter to quickly check if a given
 character in the provided sequence is a standard base.
 NOTE: only uppercase bases supported, lowercase bases
 are treated as non-standard and will be rejected.
@@ -127,9 +127,7 @@ cdef inline uint64_t _bloom_filter_64(uint64_t block) noexcept nogil:  # nolint
     return (bloom & query) == 0
 
 
-"""
-Performs element-wise equality check for two dynamic C arrays of uint64_t's
-"""
+"""Performs element-wise equality check for two dynamic C arrays of uint64_t's"""
 cdef inline bint is_array_equal(uint64_t* a, uint64_t* b, size_t length) nogil:
     cdef size_t i
 

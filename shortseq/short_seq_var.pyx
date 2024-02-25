@@ -86,9 +86,9 @@ cdef class ShortSeqVar:
         return sizeof(ShortSeqVar) + _nt_len_to_block_num(self._length) * sizeof(uint64_t)
 
     def __repr__(self):
-        # Clips the sequence to MAX_REPR_LEN characters to avoid overwhelming the debugger
-        cdef unicode clipped_seq = _unmarshall_bytes_var(self._packed, MAX_REPR_LEN)
-        return f"<ShortSeqVar ({self._length} nt): {self} ... >"
+        # Truncates the sequence to MAX_REPR_LEN characters to avoid overwhelming the debugger
+        cdef unicode trunc_seq = _unmarshall_bytes_var(self._packed, MAX_REPR_LEN)
+        return f"<ShortSeqVar ({self._length} nt): {trunc_seq} ... >"
 
     def __dealloc__(self):
         if self._packed is not NULL:
@@ -190,7 +190,7 @@ cdef inline uint64_t _marshall_bytes_pext_u64(uint64_t block, uint8_t* &seq_byte
             nonbase_ptr = reinterpret_cast[cstr](&chunk)
             raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 8, NULL)}")
 
-        block = (block << 16) | _pext_u64(sequence[i], pext_mask_64)
+        block = (block << 16) | _pext_u64(chunk, pext_mask_64)
 
     return block
 
@@ -210,7 +210,7 @@ cdef inline uint64_t _marshall_bytes_pext_u32(uint64_t block, uint8_t* &seq_byte
             nonbase_ptr = reinterpret_cast[cstr](&chunk)
             raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 4, NULL)}")
 
-        block = (block << 8) | _pext_u32(sequence[i], pext_mask_32)
+        block = (block << 8) | _pext_u32(chunk, pext_mask_32)
 
     return block
 

@@ -31,23 +31,6 @@ MAX_64_NT = 32
 def get_domain_64(): return MIN_64_NT, MAX_64_NT
 
 cdef class ShortSeq64:
-    # Todo: decide whether to standardize or remove (esp. setter...)
-
-    @property
-    def _length(self) -> uint8_t:
-        return self._length
-
-    @_length.setter
-    def _length(self, uint8_t val):
-        self._length = val
-
-    @property
-    def _packed(self) -> uint64_t:
-        return self._packed
-
-    @_packed.setter
-    def _packed(self, val):
-        self._packed = val
 
     def __hash__(self) -> uint64_t:
         return self._packed

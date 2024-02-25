@@ -13,7 +13,7 @@ from .fast_read cimport *
 from .util cimport *
 
 # Singleton Values
-cdef object one = PyLong_FromSize_t(1)
+cdef object one
 
 cdef class ShortSeqCounter(dict):
     cdef _count_short_seq_vector(self, vector[PyObject *])

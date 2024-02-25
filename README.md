@@ -74,7 +74,7 @@ However, AMD processors [prior to Zen 3](https://en.wikipedia.org/wiki/X86_Bit_m
   <img src="doc/plots/mem_by_length.svg" alt="Memory usage by length"/>
 </p>
 
-Note that the measurement of Gzip Bytes is the _length_ in bytes of the compressed sequence at maximum compression (level 9), which is much smaller than the actual PyBytes object that `gzip.compress()` returns. This footprint is therefore unobtainable when using Python's gzip module, and instead serves as a theoretical lower bound for the memory footprint of a compressed sequence.
+Note that the measurement of Gzip Bytes is the _length_ in bytes of the compressed sequence at maximum compression (level 9), which is much smaller than the actual PyBytes object that `gzip.compress()` returns. This footprint is therefore unattainable when using Python's gzip module, and instead serves as a theoretical lower bound for the memory footprint of a compressed sequence.
 
 [View source: MemoryBenchmarks.test_mem_by_length()](shortseq/tests/benchmark.py#L44)
 </br></br>
