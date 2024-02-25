@@ -19,7 +19,7 @@ short_seq_common_compile_args = [
     "-mbmi2",
     "-mpopcnt",
     "-mtune=native",
-    # '-march=native',
+    '-march=native',
 ]
 
 cython_implementations = [
