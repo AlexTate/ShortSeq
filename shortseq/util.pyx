@@ -42,8 +42,6 @@ cdef uint8_t[91] table_91 = [
 
 cdef char[4] charmap = [b'A', b'C', b'T', b'G']
 
-cdef uint8_t mask = 0x3
-
 """ To create the bloom filter:
 lc_bases = 'atgc'
 uc_bases = 'ATGC'

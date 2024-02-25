@@ -122,7 +122,7 @@ cdef inline unicode _unmarshall_bytes_var(uint64_t* enc_seq, size_t length, size
             block >>= offset
 
         for j in range(lo, hi):
-            out_ascii_buffer_var[j] = charmap[block & mask]
+            out_ascii_buffer_var[j] = charmap[block & 0b11]
             block >>= 2
 
         rem -= hi - lo

@@ -137,7 +137,7 @@ cdef inline unicode _unmarshall_bytes_128(uint128_t enc_seq, uint8_t length):
     cdef uint8_t i
 
     for i in range(length):
-        out_ascii_buffer_64[i] = charmap[enc_seq & mask]
+        out_ascii_buffer_64[i] = charmap[enc_seq & 0b11]
         enc_seq >>= 2
 
     return PyUnicode_DecodeASCII(out_ascii_buffer_64, length, NULL)
