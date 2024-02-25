@@ -1,4 +1,5 @@
 from .util cimport *
+from .short_seq cimport *
 
 # Constants
 cdef size_t MIN_128_NT
@@ -16,5 +17,4 @@ cdef class ShortSeq128:                # 16 bytes (PyObject_HEAD)
     cdef uint8_t _length               # 1 byte
                                        # Total: 48 bytes (15 bytes pad/free)
 
-# Forward declaration to allow for cimport
 cdef uint128_t _marshall_bytes_128(uint8_t* seq_bytes, uint8_t length) nogil

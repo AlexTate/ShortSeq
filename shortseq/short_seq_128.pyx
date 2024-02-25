@@ -59,13 +59,19 @@ cdef class ShortSeq128:
                 raise Exception("Slice error")
             if step != 1:
                 raise TypeError("Slice step not supported")
-            return _unmarshall_bytes_128(self._packed >> (start * 2), slice_len)
+            if slice_len == 0:
+                return empty
+            elif slice_len == 1:
+                return _subscript_128(self._packed, start)
+
+            return _slice_128(self._packed, start, slice_len)
         elif isinstance(item, int):
             index = item
             if index < 0: index += self._length
             if index < 0 or index >= self._length:
                 raise IndexError("Sequence index out of range")
-            return _unmarshall_bytes_128(self._packed >> (index * 2), 1)
+
+            return _subscript_128(self._packed, index)
         else:
             raise TypeError(f"Invalid index type: {type(item)}")
 
@@ -135,3 +141,29 @@ cdef inline unicode _unmarshall_bytes_128(uint128_t enc_seq, uint8_t length):
         enc_seq >>= 2
 
     return PyUnicode_DecodeASCII(out_ascii_buffer_64, length, NULL)
+
+
+cdef inline ShortSeq64 _subscript_128(uint128_t enc_seq, size_t index):
+    """Returns a ShortSeq64 representing the specified base from the encoded sequence."""
+
+    cdef uint64_t half
+    cdef size_t corr_idx
+
+    if index < 32:
+        half = <uint64_t> enc_seq
+        corr_idx = index
+    else:
+        half = enc_seq >> 64
+        corr_idx = index - 32
+
+    return _subscript(half, corr_idx)
+
+
+cdef inline object _slice_128(uint128_t enc_seq, size_t start, size_t slice_len):
+    """Returns a new ShortSeq object representing a slice of the encoded sequence."""
+
+    cdef uint64_t* block_ptr = reinterpret_cast[llstr](&enc_seq)
+    cdef size_t block_idx, offset
+
+    block_idx, offset = _divmod(start * 2, 64)
+    return _slice(block_ptr + block_idx, offset, slice_len)
