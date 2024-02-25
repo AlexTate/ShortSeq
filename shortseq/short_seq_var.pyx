@@ -38,24 +38,25 @@ cdef class ShortSeqVar:
     @cython.wraparound(False)
     def __getitem__(self, item):
         cdef Py_ssize_t index, start, stop, step, slice_len
-        cdef size_t block_idx, block_offset
 
         if isinstance(item, slice):
             if PySlice_GetIndicesEx(item, self._length, &start, &stop, &step, &slice_len) < 0:
                 raise Exception("Slice error")
             if step != 1:
                 raise TypeError("Slice step not supported")
+            if slice_len == 0:
+                return empty
+            if slice_len == 1:
+                return _subscript_var(self._packed, start)
 
-            block_idx, block_offset = _locate_idx(start)
-            return _unmarshall_bytes_var(self._packed, slice_len, block_idx, block_offset)
+            return _slice_var(self._packed, start, slice_len)
         elif isinstance(item, int):
             index = item
             if index < 0: index += self._length
             if index < 0 or index >= self._length:
                 raise IndexError("Sequence index out of range")
 
-            block_idx, block_offset = _locate_idx(index)
-            return _unmarshall_bytes_var(self._packed, 1, block_idx, block_offset)
+            return _subscript_var(self._packed, index)
         else:
             raise TypeError(f"Invalid index type: {type(item)}")
 
@@ -93,6 +94,7 @@ cdef class ShortSeqVar:
         if self._packed is not NULL:
             PyObject_Free(<void *>self._packed)
 
+
 @cython.cdivision(True)
 @cython.exceptval(check=False)
 cdef inline (size_t, size_t) _locate_idx(size_t index) nogil:
@@ -101,6 +103,7 @@ cdef inline (size_t, size_t) _locate_idx(size_t index) nogil:
     cdef size_t block_idx = index // NT_PER_BLOCK
     cdef size_t block_offset = 2 * (index % NT_PER_BLOCK)
     return block_idx, block_offset
+
 
 @cython.wraparound(False)
 @cython.boundscheck(False)
@@ -127,6 +130,7 @@ cdef inline unicode _unmarshall_bytes_var(uint64_t* enc_seq, size_t length, size
         hi += min(rem, NT_PER_BLOCK)
 
     return PyUnicode_DecodeASCII(out_ascii_buffer_var, length, NULL)
+
 
 @cython.wraparound(False)
 cdef uint64_t* _marshall_bytes_var(uint8_t* seq_bytes, size_t length):
@@ -210,6 +214,7 @@ cdef inline uint64_t _marshall_bytes_pext_u32(uint64_t block, uint8_t* &seq_byte
 
     return block
 
+
 @cython.wraparound(False)
 cdef inline uint64_t _marshall_bytes_serial(uint64_t block, uint8_t* &seq_bytes, size_t length) nogil:
     """Packs bases one at a time (sequential, non-vector) into the uint64_t `block`"""
@@ -226,3 +231,19 @@ cdef inline uint64_t _marshall_bytes_serial(uint64_t block, uint8_t* &seq_bytes,
         block = (block << 2) | table_91[seq_char]
 
     return block
+
+
+cdef inline ShortSeq64 _subscript_var(uint64_t* enc_seq, size_t index):
+    """Returns a ShortSeq64 representing the specified base from the encoded sequence."""
+
+    cdef size_t block_idx, block_offset
+    block_idx, block_offset = _locate_idx(index)
+    return _subscript(enc_seq[block_idx], block_offset // 2)
+
+
+cdef inline object _slice_var(uint64_t* enc_seq, size_t start, size_t slice_len):
+    """Returns a new ShortSeq object representing a slice of the encoded sequence."""
+
+    cdef size_t block_idx, block_offset
+    block_idx, block_offset = _locate_idx(start)
+    return _slice(enc_seq + block_idx, block_offset, slice_len)
