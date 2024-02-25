@@ -1,4 +1,5 @@
 from .util cimport *
+from .short_seq cimport *
 
 # Constants
 cdef size_t MIN_64_NT

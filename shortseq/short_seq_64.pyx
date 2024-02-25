@@ -75,13 +75,19 @@ cdef class ShortSeq64:
                 raise Exception("Slice error")
             if step != 1:
                 raise TypeError("Slice step not supported")
-            return _unmarshall_bytes_64(self._packed >> (start * 2), slice_len)
+            if slice_len == 0:
+                return empty
+            elif slice_len == 1:
+                return _subscript(self._packed, start)
+
+            return _slice_64(self._packed, start, slice_len)
         elif isinstance(item, int):
             index = item
             if index < 0: index += self._length
             if index < 0 or index >= self._length:
                 raise IndexError("Sequence index out of range")
-            return _unmarshall_bytes_64(self._packed >> (index * 2), 1)
+
+            return _subscript(self._packed, index)
         else:
             raise TypeError(f"Invalid index type: {type(item)}")
 
@@ -129,3 +135,8 @@ cdef inline unicode _unmarshall_bytes_64(uint64_t enc_seq, size_t length):
         enc_seq >>= 2
 
     return PyUnicode_DecodeASCII(out_ascii_buffer_32, length, NULL)
+
+cdef inline object _slice_64(uint64_t enc_seq, uint8_t start, uint8_t slice_len):
+    """Returns a new ShortSeq64 object representing a slice of the encoded sequence."""
+
+    return _slice(&enc_seq, start * 2, slice_len)
