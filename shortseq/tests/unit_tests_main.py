@@ -8,7 +8,9 @@ from shortseq import ShortSeq64, ShortSeq128, ShortSeqVar
 from shortseq import MIN_VAR_NT, MAX_VAR_NT, MIN_64_NT, MAX_64_NT, MIN_128_NT, MAX_128_NT
 from shortseq.tests.util import rand_sequence, print_var_seq_pext_chunks
 
-resources = "./testdata"
+
+if __name__ == '__main__':
+    unittest.main()
 
 
 class ShortSeqFixedWidthTests(unittest.TestCase):
@@ -163,6 +165,29 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
 
             self.assertEqual(sq.pack(a) ^ sq.pack(b), str_ham(a, b))
 
+    """Do zero-length slices return singleton empty ShortSeqs?"""
+
+    def test_zero_length_slice(self):
+        instance_ids = set()
+
+        # ShortSeq64
+        sample = rand_sequence(MAX_64_NT)
+        seq = sq.pack(sample)
+        for i in range(len(sample)):
+            zls = seq[i:i]
+            instance_ids.add(id(zls))
+            self.assertEqual(zls, "")
+
+        # ShortSeq128
+        sample = rand_sequence(MAX_128_NT)
+        seq = sq.pack(sample)
+        for i in range(len(sample)):
+            zls = seq[i:i]
+            instance_ids.add(id(zls))
+            self.assertEqual(zls, "")
+
+        self.assertEqual(len(instance_ids), 1)
+
     """Can fixed width ShortSeqs be sliced like strings?"""
 
     def test_slice(self):
@@ -180,11 +205,16 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
         sample = rand_sequence(MAX_128_NT)
         seq = sq.pack(sample)
         self.assertEqual(seq[:], sample)
-        for i in range(len(sample)):
-            self.assertEqual(seq[:i],  sample[:i])
-            self.assertEqual(seq[:-i], sample[:-i])
-            self.assertEqual(seq[i:],  sample[i:])
-            self.assertEqual(seq[-i:], sample[-i:])
+        try:
+            for i in range(len(sample)):
+                self.assertEqual(str(seq[:i]),  sample[:i])
+                self.assertEqual(str(seq[:-i]), sample[:-i])
+                self.assertEqual(str(seq[i:]),  sample[i:])
+                self.assertEqual(str(seq[-i:]), sample[-i:])
+        except Exception as e:
+            print_var_seq_pext_chunks(sample)
+            print(f"Failed at index {i}")
+            raise e
 
 
 class ShortSeqVarTests(unittest.TestCase):
@@ -258,22 +288,128 @@ class ShortSeqVarTests(unittest.TestCase):
         # Min length
         sample = rand_sequence(MIN_VAR_NT)
         seq = sq.pack(sample)
-        self.assertEqual(seq[:], sample)
-        for i in range(len(sample)):
-            self.assertEqual(seq[:i],  sample[:i])
-            self.assertEqual(seq[:-i], sample[:-i])
-            self.assertEqual(seq[i:],  sample[i:])
-            self.assertEqual(seq[-i:], sample[-i:])
+        self.assertEqual(str(seq[:]), sample)
+        try:
+            for i in range(len(sample)):
+                self.assertEqual(str(seq[:i]),  sample[:i])
+                self.assertEqual(str(seq[:-i]), sample[:-i])
+                self.assertEqual(str(seq[i:]),  sample[i:])
+                self.assertEqual(seq[-i:], sample[-i:])
+        except Exception as e:
+            print_var_seq_pext_chunks(sample)
+            print(f"Failed at index {i}")
+            raise e
 
         # Max length
         sample = rand_sequence(MAX_VAR_NT)
         seq = sq.pack(sample)
-        self.assertEqual(seq[:], sample)
+        self.assertEqual(str(seq[:]), sample)
+        try:
+            for i in range(len(sample)):
+                self.assertEqual(str(seq[:i]),  sample[:i])
+                self.assertEqual(str(seq[:-i]), sample[:-i])
+                self.assertEqual(str(seq[i:]),  sample[i:])
+                self.assertEqual(str(seq[-i:]), sample[-i:])
+        except Exception as e:
+            print_var_seq_pext_chunks(sample)
+            print(f"Failed at index {i}")
+            raise e
+
+    """Do zero-length slices return singleton empty ShortSeqs?"""
+
+    def test_zero_length_slice(self):
+        sample = rand_sequence(MAX_VAR_NT)
+        seq = sq.pack(sample)
+        instance_ids = set()
         for i in range(len(sample)):
-            self.assertEqual(seq[:i],  sample[:i])
-            self.assertEqual(seq[:-i], sample[:-i])
-            self.assertEqual(seq[i:],  sample[i:])
-            self.assertEqual(seq[-i:], sample[-i:])
+            zls = seq[i:i]
+            instance_ids.add(id(zls))
+            self.assertEqual(zls, "")
+
+        self.assertEqual(len(instance_ids), 1)
+
+    """Can ShortSeqVars be correctly sliced to ShortSeq128?"""
+
+    def test_slice_to_128(self):
+        sample = rand_sequence(MAX_VAR_NT)
+        seq = sq.pack(sample)
+
+        # Test slice start at every block in the sequence
+        for block in range(0, MAX_VAR_NT - MAX_128_NT, 32):
+            # Test min to max offset in each block
+            for offset in range(MAX_128_NT - 1):
+                # Test min to max length for a ShortSeq128
+                for length in range(MIN_128_NT, MAX_128_NT):
+                    try:
+                        start = block + offset
+                        end = start + length + 1
+                        seq_slice = seq[start:end]
+                        str_slice = sample[start:end]
+                        self.assertIsInstance(seq_slice, ShortSeq128)
+                        self.assertEqual(seq_slice, str_slice)
+                    except Exception as e:
+                        print(f"Failed at slice [{start}:{end}]")
+                        raise e
+
+    """Can ShortSeqVars be correctly sliced to ShortSeq64?"""
+
+    def test_slice_to_64(self):
+        sample = rand_sequence(MAX_VAR_NT)
+        seq = sq.pack(sample)
+
+        # Test slice start at every block in the sequence
+        for block in range(0, MAX_VAR_NT - MAX_64_NT, 32):
+            # Test min to max offset in each block
+            for offset in range(MAX_64_NT - 1):
+                # Test min to max length for a ShortSeq64
+                for length in range(MIN_64_NT, MAX_64_NT):
+                    try:
+                        start = block + offset
+                        end = start + length + 1
+                        seq_slice = seq[start:end]
+                        str_slice = sample[start:end]
+                        self.assertIsInstance(seq_slice, ShortSeq64)
+                        self.assertEqual(seq_slice, str_slice)
+                    except Exception as e:
+                        print(f"Failed at slice [{start}:{end}]")
+                        raise e
+
+    """Is edit distance correctly calculated when using simple slices?"""
+
+    def test_edit_distance_after_simple_slice(self):
+        complement = {"A": "T", "T": "A", "G": "C", "C": "G"}
+        sample_a = rand_sequence(MAX_VAR_NT)
+        sample_b = complement[sample_a[0]] + sample_a[1:-1] + complement[sample_a[-1]]
+        seq_a, seq_b = sq.pack(sample_a), sq.pack(sample_b)
+
+        self.assertEqual(seq_a ^ seq_b, 2)
+        self.assertEqual(seq_a[1:] ^ seq_b[1:], 1)
+        self.assertEqual(seq_a[:-1] ^ seq_b[:-1], 1)
+        self.assertEqual(seq_a[1:-1] ^ seq_b[1:-1], 0)
+
+    """Is edit distance correctly calculated when using slices?"""
+
+    def test_slice_edit_distance(self):
+        complement = {"A": "T", "T": "A", "G": "C", "C": "G"}
+
+        sample_a = rand_sequence(MAX_VAR_NT)
+        sample_b = "".join(complement[nt] for nt in sample_a)
+        seq_a, seq_b = sq.pack(sample_a), sq.pack(sample_b)
+
+        slices = {
+            ShortSeqVar: (slice(1, -1),           MAX_VAR_NT - 2),
+            ShortSeq128: (slice(1, MAX_128_NT-1), MAX_128_NT - 2),
+            ShortSeq64:  (slice(1, MAX_64_NT-1),  MAX_64_NT - 2),
+        }
+
+        for cls, (slc, dist) in slices.items():
+            try:
+                self.assertIsInstance(seq_a[slc], cls)
+                self.assertIsInstance(seq_b[slc], cls)
+                self.assertEqual(seq_a[slc] ^ seq_b[slc], dist)
+            except Exception as e:
+                print(f"Failed at slice {slc} ({cls})")
+                raise e
 
     """Just slice the heck out of the darn thing"""
 
@@ -284,7 +420,13 @@ class ShortSeqVarTests(unittest.TestCase):
         for _ in range(10000):
             a = randint(0, MAX_VAR_NT // 2)
             b = randint(a, a + randint(1, MAX_VAR_NT - a))
-            self.assertEqual(seq[a:b], sample[a:b])
+            try:
+                self.assertEqual(str(seq[a:b]), sample[a:b])
+            except Exception as e:
+                print_var_seq_pext_chunks(sample)
+                print_var_seq_pext_chunks(sample[a:b])
+                print(f"Failed at slice [{a}:{b}] ({b - a})")
+                raise e
 
     """Does the Hamming distance between two ShortSeqs work as expected?"""
 
@@ -348,7 +490,3 @@ class ShortSeqVarTests(unittest.TestCase):
                     print_var_seq_pext_chunks(sample + prob)
                     print(f"Failed at length {length + 1} with {prob}")
                     raise e
-
-
-if __name__ == '__main__':
-    unittest.main()
