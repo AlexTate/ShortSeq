@@ -10,11 +10,12 @@ cdef ShortSeq64 empty = ShortSeq64.__new__(ShortSeq64)
 
 # === Python constructors ===============================================================
 
-def pack(object seq):
-    if type(seq) is str:
+@cython.always_allow_keywords(False)
+cpdef pack(object seq):
+    if PyUnicode_Check(seq):
         if not seq: return empty
         else: return _from_py_str(seq)
-    elif type(seq) is bytes:
+    elif PyBytes_Check(seq):
         if not seq: return empty
         else: return _from_py_bytes(seq)
     elif type(seq) is ShortSeq64:
@@ -24,7 +25,7 @@ def pack(object seq):
     elif type(seq) is ShortSeqVar:
         return seq
     else:
-        raise TypeError(f"Cannot pack {type(seq)} into a ShortSeq.")
+        raise TypeError(f'Cannot pack objects of type "{type(seq)}"')
 
 def from_str(str seq_str):
     if not seq_str: return empty
@@ -37,8 +38,9 @@ def from_bytes(bytes seq_bytes):
 # === Cython constructors ===============================================================
 
 cdef object _from_py_str(str seq_str):
-    cdef bytes seq_bytes = PyUnicode_AsASCIIString(seq_str)
-    return _from_py_bytes(seq_bytes)
+    cdef char* sequence = <char *>PyUnicode_DATA(seq_str)
+    cdef size_t length = PyUnicode_GET_LENGTH(seq_str)
+    return _new(sequence, length)
 
 cdef object _from_py_bytes(bytes seq_bytes):
     cdef char* sequence = PyBytes_AsString(seq_bytes)

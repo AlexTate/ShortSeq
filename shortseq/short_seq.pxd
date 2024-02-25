@@ -19,6 +19,7 @@ cdef ShortSeq64 empty
 Importable constructor functions for Cython space
 """
 
+cpdef pack(object seq)
 cdef object _from_py_str(str seq_str)
 cdef object _from_py_bytes(bytes seq_bytes)
 cdef object _from_chars(char* sequence)
