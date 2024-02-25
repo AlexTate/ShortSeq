@@ -11,12 +11,26 @@ cdef inline (size_t, size_t) _divmod(size_t dividend, size_t divisor):
 
     return div_res, mod_res
 
+@cython.cdivision(True)
+cdef inline size_t _bit_len_to_block_num(size_t length) noexcept nogil:
+    """Returns the number of 64-bit blocks needed to store the specified length of bits."""
+
+    return <size_t>ceil(<double>length / 64.0)
+
+@cython.cdivision(True)
+cdef inline size_t _nt_len_to_block_num(size_t length) noexcept nogil:
+    """Returns the number of 64-bit blocks needed to store the specified length of nucleotides."""
+
+    return <size_t>ceil(<double>length / <double>NT_PER_BLOCK)
+
 """
 CONSTANTS
 """
 
 cdef uint64_t pext_mask_64 = 0x0606060606060606
 cdef uint32_t pext_mask_32 = 0x06060606
+
+cdef size_t NT_PER_BLOCK = 32
 
 cdef uint8_t[91] table_91 = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,

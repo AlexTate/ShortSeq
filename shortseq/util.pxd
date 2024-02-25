@@ -18,7 +18,7 @@ cdef uint64_t pext_mask_64
 cdef uint32_t pext_mask_32
 
 # Constants
-cdef uint8_t mask
+cdef size_t NT_PER_BLOCK
 cdef char[4] charmap
 
 """
@@ -141,3 +141,11 @@ still give expected values for negative numbers.
 """
 
 cdef (size_t, size_t) _divmod(size_t dividend, size_t divisor)
+
+
+"""Returns the number of 64-bit blocks needed to store the specified length of bits."""
+cdef size_t _bit_len_to_block_num(size_t length) noexcept nogil
+
+
+"""Returns the number of 64-bit blocks needed to store the specified length of nucleotides."""
+cdef size_t _nt_len_to_block_num(size_t length) noexcept nogil

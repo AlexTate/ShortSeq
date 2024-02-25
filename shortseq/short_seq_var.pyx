@@ -68,7 +68,7 @@ cdef class ShortSeqVar:
                             f"({self._length} != {other._length})")
 
         cdef uint64_t block, block_other, block_comp
-        cdef size_t n_blocks = _length_to_block_num(self._length)
+        cdef size_t n_blocks = _nt_len_to_block_num(self._length)
         cdef size_t pop_cnt = 0
         cdef size_t i
 
@@ -82,7 +82,7 @@ cdef class ShortSeqVar:
         return pop_cnt
 
     def __sizeof__(self):
-        return sizeof(ShortSeqVar) + _length_to_block_num(self._length) * sizeof(uint64_t)
+        return sizeof(ShortSeqVar) + _nt_len_to_block_num(self._length) * sizeof(uint64_t)
 
     def __repr__(self):
         # Clips the sequence to MAX_REPR_LEN characters to avoid overwhelming the debugger
@@ -94,14 +94,9 @@ cdef class ShortSeqVar:
             PyObject_Free(<void *>self._packed)
 
 @cython.cdivision(True)
-cdef inline size_t _length_to_block_num(size_t length):
-    """Returns the number of 64-bit blocks needed to store the given length."""
-
-    return <size_t>ceil(<double>length / <double>NT_PER_BLOCK)
-
-@cython.cdivision(True)
-cdef inline (size_t, size_t) _locate_idx(size_t index):
-    """Returns the block index and offset (in packed units) where the given index (in nt units) is located."""
+@cython.exceptval(check=False)
+cdef inline (size_t, size_t) _locate_idx(size_t index) nogil:
+    """Returns the block index and bit offset where the given index (in nt units) is located."""
 
     cdef size_t block_idx = index // NT_PER_BLOCK
     cdef size_t block_offset = 2 * (index % NT_PER_BLOCK)
@@ -112,7 +107,7 @@ cdef inline (size_t, size_t) _locate_idx(size_t index):
 cdef inline unicode _unmarshall_bytes_var(uint64_t* enc_seq, size_t length, size_t start_block=0, size_t offset=0):
     cdef:
         uint64_t block
-        size_t blocks_spanned = _length_to_block_num(length) + 1
+        size_t blocks_spanned = _nt_len_to_block_num(length) + 1
         size_t hi = min(length, (64 - offset) // 2)
         size_t rem = length
         size_t lo = 0
@@ -136,7 +131,7 @@ cdef inline unicode _unmarshall_bytes_var(uint64_t* enc_seq, size_t length, size
 @cython.wraparound(False)
 cdef uint64_t* _marshall_bytes_var(uint8_t* seq_bytes, size_t length):
     cdef:
-        size_t n_blocks = _length_to_block_num(length)
+        size_t n_blocks = _nt_len_to_block_num(length)
         uint64_t* hash_arr = <llstr>PyObject_Calloc(n_blocks, sizeof(uint64_t))
         uint8_t* seq_it = seq_bytes
         size_t seq_rem = length
