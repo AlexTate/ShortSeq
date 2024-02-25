@@ -1,8 +1,10 @@
 from libc.stdint cimport uint8_t, uint32_t, uint64_t
 from libc.stddef cimport size_t
 from libc.string cimport strlen
+from libc.math cimport ceil
 from libcpp.cast cimport reinterpret_cast
 
+from cpython.mem cimport PyObject_Calloc, PyObject_Free
 from cpython.object cimport Py_SIZE, PyObject
 from cpython.ref cimport Py_XDECREF, Py_XINCREF
 from cpython.slice cimport PySlice_GetIndicesEx, PySlice_AdjustIndices
@@ -50,9 +52,13 @@ ctypedef struct PyBytesObject:
 For SIMD operations. 
 """
 cdef extern from "x86intrin.h" nogil:
+    # SSE4.2
+    uint64_t _popcnt64(uint64_t __X)
+
+    # BMI2
     uint64_t _pext_u64 (uint64_t __X, uint64_t __Y)
     uint32_t _pext_u32 (uint32_t __X, uint32_t __Y)
-    uint64_t _popcnt64(uint64_t __X)
+    uint64_t _bzhi_u64(uint64_t __X, uint32_t __Y)
 
 """
 A little bit of hackery to allow fast access to the packed hash field of both
