@@ -156,13 +156,13 @@ cdef inline ShortSeq64 _subscript_128(uint64_t* enc_seq, size_t index):
     """Returns a ShortSeq64 representing the specified base from the encoded sequence."""
 
     cdef size_t block_idx, block_offset
-    block_idx, nt_offset = _divmod(index, 32)
-    return _subscript(enc_seq[block_idx], nt_offset)
+    block_idx, block_offset = _locate_idx(index)
+    return _subscript(enc_seq[block_idx], block_offset)
 
 
 cdef inline object _slice_128(uint64_t* enc_seq, size_t start, size_t slice_len):
     """Returns a new ShortSeq object representing a slice of the encoded sequence."""
 
     cdef size_t block_idx, offset
-    block_idx, offset = _divmod(start * 2, 64)
+    block_idx, offset = _locate_idx(start)
     return _slice(enc_seq + block_idx, offset, slice_len)

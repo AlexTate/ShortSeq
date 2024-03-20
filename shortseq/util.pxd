@@ -144,7 +144,11 @@ Python-style modulo is performed and not C-style remainder, so this should
 still give expected values for negative numbers.
 """
 
-cdef (size_t, size_t) _divmod(size_t dividend, size_t divisor)
+cdef (size_t, size_t) _divmod(size_t dividend, size_t divisor) nogil
+
+
+"""Returns the block index and bit offset where the index (given in nt units) is located."""
+cdef (size_t, size_t) _locate_idx(size_t index) nogil
 
 
 """Returns the number of 64-bit blocks needed to store the specified length of bits."""

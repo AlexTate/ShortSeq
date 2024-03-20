@@ -61,7 +61,7 @@ cdef class ShortSeq64:
             if slice_len == 0:
                 return empty
             elif slice_len == 1:
-                return _subscript(self._packed, start)
+                return _subscript_64(self._packed, start)
 
             return _slice_64(self._packed, start, slice_len)
         elif isinstance(item, int):
@@ -70,7 +70,7 @@ cdef class ShortSeq64:
             if index < 0 or index >= self._length:
                 raise IndexError("Sequence index out of range")
 
-            return _subscript(self._packed, index)
+            return _subscript_64(self._packed, index)
         else:
             raise TypeError(f"Invalid index type: {type(item)}")
 
@@ -107,6 +107,7 @@ cdef inline uint64_t _marshall_bytes_64(uint8_t* sequence, uint8_t length) nogil
 
     return hashed
 
+
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.boundscheck(False)
@@ -118,6 +119,13 @@ cdef inline unicode _unmarshall_bytes_64(uint64_t enc_seq, size_t length):
         enc_seq >>= 2
 
     return PyUnicode_DecodeASCII(out_ascii_buffer_32, length, NULL)
+
+
+cdef inline ShortSeq64 _subscript_64(uint64_t enc_seq, size_t index):
+    """Returns a new ShortSeq64 object representing a single base."""
+
+    return _subscript(enc_seq, index * 2)
+
 
 cdef inline object _slice_64(uint64_t enc_seq, uint8_t start, uint8_t slice_len):
     """Returns a new ShortSeq64 object representing a slice of the encoded sequence."""

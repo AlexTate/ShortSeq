@@ -95,16 +95,6 @@ cdef class ShortSeqVar:
             PyObject_Free(<void *>self._packed)
 
 
-@cython.cdivision(True)
-@cython.exceptval(check=False)
-cdef inline (size_t, size_t) _locate_idx(size_t index) nogil:
-    """Returns the block index and bit offset where the given index (in nt units) is located."""
-
-    cdef size_t block_idx = index // NT_PER_BLOCK
-    cdef size_t block_offset = 2 * (index % NT_PER_BLOCK)
-    return block_idx, block_offset
-
-
 @cython.wraparound(False)
 @cython.boundscheck(False)
 cdef inline unicode _unmarshall_bytes_var(uint64_t* enc_seq, size_t length, size_t start_block=0, size_t offset=0):
@@ -238,7 +228,7 @@ cdef inline ShortSeq64 _subscript_var(uint64_t* enc_seq, size_t index):
 
     cdef size_t block_idx, block_offset
     block_idx, block_offset = _locate_idx(index)
-    return _subscript(enc_seq[block_idx], block_offset // 2)
+    return _subscript(enc_seq[block_idx], block_offset)
 
 
 cdef inline object _slice_var(uint64_t* enc_seq, size_t start, size_t slice_len):

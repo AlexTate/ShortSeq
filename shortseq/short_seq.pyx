@@ -75,18 +75,18 @@ cdef inline object _new(char* sequence, size_t length):
 
 
 # todo: refactor to take bit offset rather than nt offset, for consistency
-cdef inline ShortSeq64 _subscript(uint64_t packed, size_t index):
+cdef inline ShortSeq64 _subscript(uint64_t packed, size_t offset):
     """Constructs a ShortSeq64 object from a single base of a bit-packed sequence.
     
     Args:
         packed: uint64_t
-            The packed sequence to be subscripted.
+            The block containing the base to extract.
         index: size_t
-            The index (in nt units) of the encoded base.
+            The offset in bits of the encoded base.
     """
 
     cdef ShortSeq64 out = ShortSeq64.__new__(ShortSeq64)
-    out._packed = (packed >> (index * 2)) & 0b11
+    out._packed = (packed >> offset) & 0b11
     out._length = 1
     return out
 

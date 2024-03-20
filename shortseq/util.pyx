@@ -1,7 +1,7 @@
 import cython
 
 @cython.cdivision(True)
-cdef inline (size_t, size_t) _divmod(size_t dividend, size_t divisor):
+cdef inline (size_t, size_t) _divmod(size_t dividend, size_t divisor) nogil:
     cdef size_t div_res
     cdef size_t mod_res
 
@@ -10,6 +10,15 @@ cdef inline (size_t, size_t) _divmod(size_t dividend, size_t divisor):
     mod_res = (((dividend % divisor) + divisor) % divisor)
 
     return div_res, mod_res
+
+@cython.cdivision(True)
+@cython.exceptval(check=False)
+cdef inline (size_t, size_t) _locate_idx(size_t index) nogil:
+    """Returns the block index and bit offset where the index (given in nt units) is located."""
+
+    cdef size_t block_idx, block_offset
+    block_idx, block_offset = _divmod(index, NT_PER_BLOCK)
+    return block_idx, block_offset * 2
 
 @cython.cdivision(True)
 cdef inline size_t _bit_len_to_block_num(size_t length) noexcept nogil:

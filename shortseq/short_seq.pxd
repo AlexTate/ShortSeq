@@ -25,5 +25,5 @@ cdef object _from_py_bytes(bytes seq_bytes)
 cdef object _from_chars(char* sequence)
 cdef object _new(char* sequence, size_t length)
 
-cdef ShortSeq64 _subscript(uint64_t packed, size_t index)
+cdef ShortSeq64 _subscript(uint64_t packed, size_t offset)
 cdef object _slice(uint64_t* packed, size_t offset, size_t slice_len)
