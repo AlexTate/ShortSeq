@@ -95,7 +95,7 @@ This is a temporary fix until I find a better solution
 (or perhaps this will be removed and left to user's responsibility).
 """
 
-cdef inline bint is_base(uint8_t char) nogil:
+cdef inline bint is_base(uint8_t char) noexcept nogil:
     return bloom & (1ULL << (char & 63)) == 0
 
 

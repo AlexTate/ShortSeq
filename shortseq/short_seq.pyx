@@ -63,8 +63,7 @@ cdef inline object _new(char* sequence, size_t length):
     elif length <= MAX_128_NT:
         out128 = ShortSeq128.__new__(ShortSeq128)
         length = <uint8_t> length
-        (<ShortSeq128> out128)._packed = _marshall_bytes_128(<uint8_t *> sequence, length)
-        (<ShortSeq128> out128)._length = length
+        _marshall_bytes_128(<ShortSeq128>out128, <uint8_t *> sequence, <uint8_t>length)
         return out128
     elif length <= MAX_VAR_NT:
         outvar = ShortSeqVar.__new__(ShortSeqVar)
@@ -75,6 +74,7 @@ cdef inline object _new(char* sequence, size_t length):
         raise Exception(f"Sequences longer than {MAX_VAR_NT} bases are not supported.")
 
 
+# todo: refactor to take bit offset rather than nt offset, for consistency
 cdef inline ShortSeq64 _subscript(uint64_t packed, size_t index):
     """Constructs a ShortSeq64 object from a single base of a bit-packed sequence.
     

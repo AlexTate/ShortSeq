@@ -82,8 +82,8 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
         seq_min = sq.pack(rand_sequence(MIN_128_NT))
         seq_max = sq.pack(rand_sequence(MAX_128_NT))
 
-        self.assertEqual(sys.getsizeof(seq_min), 48)
-        self.assertEqual(sys.getsizeof(seq_max), 48)
+        self.assertEqual(sys.getsizeof(seq_min), 40)
+        self.assertEqual(sys.getsizeof(seq_max), 40)
 
     """Checks that randomly generated sequences encode and decode correctly
         for the entire valid range of lengths."""
@@ -215,6 +215,29 @@ class ShortSeqFixedWidthTests(unittest.TestCase):
             print_var_seq_pext_chunks(sample)
             print(f"Failed at index {i}")
             raise e
+
+    """Can ShortSeq128 be correctly sliced to ShortSeq64?"""
+
+    def test_slice_to_64(self):
+        sample = rand_sequence(MAX_128_NT)
+        seq = sq.pack(sample)
+
+        # Test slice start at every block in the sequence
+        for block in range(0, MAX_128_NT - MAX_64_NT, 32):
+            # Test min to max offset in each block
+            for offset in range(MAX_64_NT - 1):
+                # Test min to max length for a ShortSeq64
+                for length in range(MIN_64_NT, MAX_64_NT):
+                    try:
+                        start = block + offset
+                        end = start + length + 1
+                        seq_slice = seq[start:end]
+                        str_slice = sample[start:end]
+                        self.assertIsInstance(seq_slice, ShortSeq64)
+                        self.assertEqual(seq_slice, str_slice)
+                    except Exception as e:
+                        print(f"Failed at slice [{start}:{end}]")
+                        raise e
 
 
 class ShortSeqVarTests(unittest.TestCase):

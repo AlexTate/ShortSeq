@@ -2,11 +2,11 @@
 
 ShortSeqs are compact and efficient Python objects that hold short sequences while using up to 73% less memory compared to built-in types. They are prehashed and comparable, they support slicing, indexing, and a variety of vectorized operations, and they easily convert back to their original string form. Their memory advantage is shown in the table below.
 
-| Sequence Length | PyUnicode Size | PyBytes Size | ShortSeq Size | % Reduced |
-|-----------------|----------------------------|--------------------------|--------------------------:|--------------------|
-| 0-32 nt         | 56-88 bytes                | 40-72 bytes              |          32 bytes (fixed) | **43-64%**         |
-| 33-64 nt        | 88-120 bytes               | 72-104 bytes             |          48 bytes (fixed) | **45-60%**         |
-| 65-1024 nt      | 120-1080 bytes             | 104-1064 bytes           |              56-288 bytes | **53-73%**         |
+| Sequence Length | PyUnicode Size | PyBytes Size   |    ShortSeq Size | % Reduced  |
+|-----------------|----------------|----------------|-----------------:|------------|
+| 0-32 nt         | 56-88 bytes    | 40-72 bytes    | 32 bytes (fixed) | **43-64%** |
+| 33-64 nt        | 88-120 bytes   | 72-104 bytes   | 40 bytes (fixed) | **55-67%** |
+| 65-1024 nt      | 120-1080 bytes | 104-1064 bytes |     56-288 bytes | **53-73%** |
 
 <sup>* Object sizes were measured on Python 3.10 using `asizeof()` from the `pympler` package. % Reduced is PyUnicode vs. ShortSeq</sup>
 

@@ -8,20 +8,20 @@ into fixed-size objects using 2-bit encoding. For sequences
 32 bases or less, ShortSeq64 is more efficient.
 
 Max compression (64 base sequence):
-    Memory footprint: 48 bytes
-    PyBytes equivalent: 104 bytes (54% reduction)
-    PyUnicode equivalent: 120 bytes (60% reduction)
+    Memory footprint: 40 bytes
+    PyBytes equivalent: 104 bytes (62% reduction)
+    PyUnicode equivalent: 120 bytes (67% reduction)
 Min compression (33 base sequence):
-    Memory footprint: 48 bytes
-    PyBytes equivalent: 72 bytes (33% reduction)
-    PyUnicode Equivalent: 88 bytes (45% reduction)
+    Memory footprint: 40 bytes
+    PyBytes equivalent: 72 bytes (44% reduction)
+    PyUnicode Equivalent: 88 bytes (55% reduction)
 
 Alternatively,
 Consider encoding length into lower 6 bits (representing up to 63):
     Max sequence length: 61 bases
-    Memory footprint: 48 bytes
-    PyBytes equivalent: 96 bytes (50% reduction)
-    PyUnicode equivalent: 112 bytes (57% reduction)
+    Memory footprint: 40 bytes
+    PyBytes equivalent: 96 bytes (58% reduction)
+    PyUnicode equivalent: 112 bytes (64% reduction)
 """
 
 # Constants
@@ -34,15 +34,17 @@ def get_domain_128(): return MIN_128_NT, MAX_128_NT
 cdef class ShortSeq128:
 
     def __hash__(self):
-        return <uint64_t>self._packed
+        return self._packed[0]
 
     def __len__(self):
         return self._length
 
     def __eq__(self, other):
         if type(other) is ShortSeq128:
-            return self._length == (<ShortSeq128> other)._length and \
-                   self._packed == (<ShortSeq128> other)._packed
+            other_len = (<ShortSeq128>other)._length
+            other_ptr = (<ShortSeq128>other)._packed
+            return self._length == other_len and \
+                memcmp(self._packed, <void *> other_ptr, self._length) == 0
         elif isinstance(other, (str, bytes)):
             return self._length == len(other) and \
                    str(self) == other
@@ -80,15 +82,18 @@ cdef class ShortSeq128:
             raise Exception(f"Hamming distance requires sequences of equal length "
                             f"({self._length} != {other._length})")
 
-        cdef uint128_t xor = self._packed ^ (<ShortSeq128> other)._packed
-        cdef uint64_t lo = <uint64_t> xor
-        cdef uint64_t hi = xor >> 64
+        cdef uint64_t block, block_other, block_comp
+        cdef size_t pop_cnt = 0
+        cdef size_t i
 
-        # Some bases XOR to 0x3; collapse these results to 0x1 inplace
-        lo = ((lo >> 1) | lo) & 0x5555555555555555LL
-        hi = ((hi >> 1) | hi) & 0x5555555555555555LL
+        for i in range(2):
+            block = self._packed[i]
+            block_other = other._packed[i]
+            block_comp = block ^ block_other
+            block_comp = ((block_comp >> 1) | block_comp) & 0x5555555555555555LL  # Some bases XOR to 0x3; collapse these inplace to 0x1
+            pop_cnt += _popcnt64(block_comp)
 
-        return _popcnt64(lo) + _popcnt64(hi)
+        return pop_cnt
 
     def __str__(self):
         return _unmarshall_bytes_128(self._packed, self._length)
@@ -96,74 +101,68 @@ cdef class ShortSeq128:
     def __repr__(self):
         return f"<ShortSeq128 ({self._length} nt): {self}>"
 
-
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.boundscheck(False)
-cdef inline uint128_t _marshall_bytes_128(uint8_t* sequence, uint8_t length) nogil:
-    """Encodes the input sequence into a 128 bit integer using 2-bit encoding.
-    Note that from a high-level memory perspective, the layout of the resulting marshalled
-    bytes is more similar to that of ShortSeq64, which stores bases in a sequentially continuous
-    manner, than it is to ShortSeqVar, which stores bases in uint64_t array elements."""
+cdef inline void _marshall_bytes_128(ShortSeq128 out, uint8_t* sequence, uint8_t length) nogil:
+    """Note that unlike the other _marshall_bytes_* functions, this one does not return a value. 
+    Instead, it adds the packed sequence and length to the provided ShortSeq128 instance."""
 
     cdef:
         uint64_t* wide_iter = reinterpret_cast[llstr](sequence)
-        uint64_t hi, lo
         char* nonbase_ptr
         uint8_t i
 
-    # Last 32 bases can be variable length. Handle them one at a time.
-    for i in reversed(range(32, length)):
-        seq_char = sequence[i]
-        if not is_base(seq_char):
-            nonbase_ptr = reinterpret_cast[cstr](&seq_char)
-            raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 1, NULL)}")
-        hi = (hi << 2) | table_91[seq_char]
-
-    # First 32 bases are always guaranteed. Handle them 8 at a time.
+    # First 32 bases are guaranteed
     for i in reversed(range(4)):
         seq_chunk = wide_iter[i]
         if not _bloom_filter_64(seq_chunk):
             nonbase_ptr = reinterpret_cast[cstr](&seq_chunk)
             raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 1, NULL)}")
-        lo = (lo << 16) | _pext_u64(seq_chunk, pext_mask_64)
+        out._packed[0] = (out._packed[0] << 16) | _pext_u64(seq_chunk, pext_mask_64)
 
-    return (<uint128_t>hi << 64) | <uint128_t>lo
+    for i in reversed(range(32, length)):
+        seq_char = sequence[i]
+        if not is_base(seq_char):
+            nonbase_ptr = reinterpret_cast[cstr](&seq_char)
+            raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 1, NULL)}")
+        out._packed[1] = (out._packed[1] << 2) | table_91[seq_char]
+
+    out._length = length
+
 
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.boundscheck(False)
-cdef inline unicode _unmarshall_bytes_128(uint128_t enc_seq, uint8_t length):
+cdef inline unicode _unmarshall_bytes_128(uint64_t* enc_seq, uint8_t length):
+    cdef uint64_t block
     cdef uint8_t i
 
-    for i in range(length):
-        out_ascii_buffer_64[i] = charmap[enc_seq & 0b11]
-        enc_seq >>= 2
+    # First block is guaranteed full
+    block = enc_seq[0]
+    for i in range(32):
+        out_ascii_buffer_64[i] = charmap[block & 0b11]
+        block >>= 2
+
+    block = enc_seq[1]
+    for i in range(32, length):
+        out_ascii_buffer_64[i] = charmap[block & 0b11]
+        block >>= 2
 
     return PyUnicode_DecodeASCII(out_ascii_buffer_64, length, NULL)
 
 
-cdef inline ShortSeq64 _subscript_128(uint128_t enc_seq, size_t index):
+cdef inline ShortSeq64 _subscript_128(uint64_t* enc_seq, size_t index):
     """Returns a ShortSeq64 representing the specified base from the encoded sequence."""
 
-    cdef uint64_t half
-    cdef size_t corr_idx
-
-    if index < 32:
-        half = <uint64_t> enc_seq
-        corr_idx = index
-    else:
-        half = enc_seq >> 64
-        corr_idx = index - 32
-
-    return _subscript(half, corr_idx)
+    cdef size_t block_idx, block_offset
+    block_idx, nt_offset = _divmod(index, 32)
+    return _subscript(enc_seq[block_idx], nt_offset)
 
 
-cdef inline object _slice_128(uint128_t enc_seq, size_t start, size_t slice_len):
+cdef inline object _slice_128(uint64_t* enc_seq, size_t start, size_t slice_len):
     """Returns a new ShortSeq object representing a slice of the encoded sequence."""
 
-    cdef uint64_t* block_ptr = reinterpret_cast[llstr](&enc_seq)
     cdef size_t block_idx, offset
-
     block_idx, offset = _divmod(start * 2, 64)
-    return _slice(block_ptr + block_idx, offset, slice_len)
+    return _slice(enc_seq + block_idx, offset, slice_len)
