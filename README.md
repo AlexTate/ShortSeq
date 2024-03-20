@@ -2,11 +2,11 @@
 
 ShortSeqs are compact and efficient Python objects that hold short sequences while using up to 73% less memory compared to built-in types. They are prehashed and comparable, they support slicing, indexing, and a variety of vectorized operations, and they easily convert back to their original string form. Their memory advantage is shown in the table below.
 
-| Sequence Length | PyUnicode Size | PyBytes Size | ShortSeq Size | % Reduced |
-|-----------------|----------------------------|--------------------------|--------------------------:|--------------------|
-| 0-32 nt         | 56-88 bytes                | 40-72 bytes              |          32 bytes (fixed) | **43-64%**         |
-| 33-64 nt        | 88-120 bytes               | 72-104 bytes             |          48 bytes (fixed) | **45-60%**         |
-| 65-1024 nt      | 120-1080 bytes             | 104-1064 bytes           |              56-288 bytes | **53-73%**         |
+| Sequence Length | PyUnicode Size | PyBytes Size   |    ShortSeq Size | % Reduced  |
+|-----------------|----------------|----------------|-----------------:|------------|
+| 0-32 nt         | 56-88 bytes    | 40-72 bytes    | 32 bytes (fixed) | **43-64%** |
+| 33-64 nt        | 88-120 bytes   | 72-104 bytes   | 40 bytes (fixed) | **55-67%** |
+| 65-1024 nt      | 120-1080 bytes | 104-1064 bytes |     56-288 bytes | **53-73%** |
 
 <sup>* Object sizes were measured on Python 3.10 using `asizeof()` from the `pympler` package. % Reduced is PyUnicode vs. ShortSeq</sup>
 
@@ -74,7 +74,7 @@ However, AMD processors [prior to Zen 3](https://en.wikipedia.org/wiki/X86_Bit_m
   <img src="doc/plots/mem_by_length.svg" alt="Memory usage by length"/>
 </p>
 
-Note that the measurement of Gzip Bytes is the _length_ in bytes of the compressed sequence at maximum compression (level 9), which is much smaller than the actual PyBytes object that `gzip.compress()` returns. This footprint is therefore unobtainable when using Python's gzip module, and instead serves as a theoretical lower bound for the memory footprint of a compressed sequence.
+Note that the measurement of Gzip Bytes is the _length_ in bytes of the compressed sequence at maximum compression (level 9), which is much smaller than the actual PyBytes object that `gzip.compress()` returns. This footprint is therefore unattainable when using Python's gzip module, and instead serves as a theoretical lower bound for the memory footprint of a compressed sequence.
 
 [View source: MemoryBenchmarks.test_mem_by_length()](shortseq/tests/benchmark.py#L44)
 </br></br>

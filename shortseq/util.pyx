@@ -1,7 +1,7 @@
 import cython
 
 @cython.cdivision(True)
-cdef inline (size_t, size_t) _divmod(size_t dividend, size_t divisor):
+cdef inline (size_t, size_t) _divmod(size_t dividend, size_t divisor) nogil:
     cdef size_t div_res
     cdef size_t mod_res
 
@@ -11,10 +11,35 @@ cdef inline (size_t, size_t) _divmod(size_t dividend, size_t divisor):
 
     return div_res, mod_res
 
+@cython.cdivision(True)
+@cython.exceptval(check=False)
+cdef inline (size_t, size_t) _locate_idx(size_t index) nogil:
+    """Returns the block index and bit offset where the index (given in nt units) is located."""
+
+    cdef size_t block_idx, block_offset
+    block_idx, block_offset = _divmod(index, NT_PER_BLOCK)
+    return block_idx, block_offset * 2
+
+@cython.cdivision(True)
+cdef inline size_t _bit_len_to_block_num(size_t length) noexcept nogil:
+    """Returns the number of 64-bit blocks needed to store the specified length of bits."""
+
+    return <size_t>ceil(<double>length / 64.0)
+
+@cython.cdivision(True)
+cdef inline size_t _nt_len_to_block_num(size_t length) noexcept nogil:
+    """Returns the number of 64-bit blocks needed to store the specified length of nucleotides."""
+
+    return <size_t>ceil(<double>length / <double>NT_PER_BLOCK)
+
 """
-These values must be assigned here in order for the definition
-(and not just the declaration) to be correctly cimported
+CONSTANTS
 """
+
+cdef uint64_t pext_mask_64 = 0x0606060606060606
+cdef uint32_t pext_mask_32 = 0x06060606
+
+cdef size_t NT_PER_BLOCK = 32
 
 cdef uint8_t[91] table_91 = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -25,8 +50,6 @@ cdef uint8_t[91] table_91 = [
 ]
 
 cdef char[4] charmap = [b'A', b'C', b'T', b'G']
-
-cdef uint8_t mask = 0x3
 
 """ To create the bloom filter:
 lc_bases = 'atgc'

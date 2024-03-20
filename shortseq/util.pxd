@@ -1,18 +1,26 @@
 from libc.stdint cimport uint8_t, uint32_t, uint64_t
 from libc.stddef cimport size_t
 from libc.string cimport strlen
+from libc.math cimport ceil
 from libcpp.cast cimport reinterpret_cast
 
+from cpython.mem cimport PyObject_Calloc, PyObject_Free
 from cpython.object cimport Py_SIZE, PyObject
 from cpython.ref cimport Py_XDECREF, Py_XINCREF
 from cpython.slice cimport PySlice_GetIndicesEx, PySlice_AdjustIndices
 from cpython.unicode cimport PyUnicode_DecodeASCII
 
-# For Cython, this is necessary for using these types in brackets (reinterpret_cast)
+# For Cython, this is necessary when using these types in brackets (reinterpret_cast)
+ctypedef uint64_t* llstr
+ctypedef uint32_t* istr
 ctypedef char* cstr
 
+# Mask values for pext instructions
+cdef uint64_t pext_mask_64
+cdef uint32_t pext_mask_32
+
 # Constants
-cdef uint8_t mask
+cdef size_t NT_PER_BLOCK
 cdef char[4] charmap
 
 """
@@ -44,9 +52,13 @@ ctypedef struct PyBytesObject:
 For SIMD operations. 
 """
 cdef extern from "x86intrin.h" nogil:
+    # SSE4.2
+    uint64_t _popcnt64(uint64_t __X)
+
+    # BMI2
     uint64_t _pext_u64 (uint64_t __X, uint64_t __Y)
     uint32_t _pext_u32 (uint32_t __X, uint32_t __Y)
-    uint64_t _popcnt64(uint64_t __X)
+    uint64_t _bzhi_u64(uint64_t __X, uint32_t __Y)
 
 """
 A little bit of hackery to allow fast access to the packed hash field of both
@@ -74,7 +86,7 @@ cpdef inline printbin(header, value, value_bitwidth, chunk_bitwidth):
 
 
 """
-This function uses a bloom filter to quickly check if a given
+These functions use a bloom filter to quickly check if a given
 character in the provided sequence is a standard base.
 NOTE: only uppercase bases supported, lowercase bases
 are treated as non-standard and will be rejected.
@@ -83,13 +95,39 @@ This is a temporary fix until I find a better solution
 (or perhaps this will be removed and left to user's responsibility).
 """
 
-cdef inline bint is_base(uint8_t char) nogil:
-    return bloom & (1 << (char & 63)) == 0
+cdef inline bint is_base(uint8_t char) noexcept nogil:
+    return bloom & (1ULL << (char & 63)) == 0
 
 
-"""
-Performs element-wise equality check for two dynamic C arrays of uint64_t's
-"""
+"""Validates ASCII bases 4 at a time"""
+
+cdef inline bint _bloom_filter_32(uint32_t block) noexcept nogil:
+    cdef uint32_t shifts = block & 0x3F3F3F3FL
+    cdef uint64_t query = ((1ULL << ((shifts >> 0)  & 0xFF)) |
+                           (1ULL << ((shifts >> 8)  & 0xFF)) |
+                           (1ULL << ((shifts >> 16) & 0xFF)) |
+                           (1ULL << ((shifts >> 24) & 0xFF)))
+
+    return (bloom & query) == 0
+
+
+"""Validates ASCII bases 8 at a time"""
+
+cdef inline uint64_t _bloom_filter_64(uint64_t block) noexcept nogil:  # nolint
+    cdef uint64_t shifts = block & 0x3F3F3F3F3F3F3F3FLL
+    cdef uint64_t query = ((1ULL << ((shifts >> 0)  & 0xFF)) |
+                           (1ULL << ((shifts >> 8)  & 0xFF)) |
+                           (1ULL << ((shifts >> 16) & 0xFF)) |
+                           (1ULL << ((shifts >> 24) & 0xFF)) |
+                           (1ULL << ((shifts >> 32) & 0xFF)) |
+                           (1ULL << ((shifts >> 40) & 0xFF)) |
+                           (1ULL << ((shifts >> 48) & 0xFF)) |
+                           (1ULL << ((shifts >> 56) & 0xFF)))
+
+    return (bloom & query) == 0
+
+
+"""Performs element-wise equality check for two dynamic C arrays of uint64_t's"""
 cdef inline bint is_array_equal(uint64_t* a, uint64_t* b, size_t length) nogil:
     cdef size_t i
 
@@ -106,4 +144,16 @@ Python-style modulo is performed and not C-style remainder, so this should
 still give expected values for negative numbers.
 """
 
-cdef (size_t, size_t) _divmod(size_t dividend, size_t divisor)
+cdef (size_t, size_t) _divmod(size_t dividend, size_t divisor) nogil
+
+
+"""Returns the block index and bit offset where the index (given in nt units) is located."""
+cdef (size_t, size_t) _locate_idx(size_t index) nogil
+
+
+"""Returns the number of 64-bit blocks needed to store the specified length of bits."""
+cdef size_t _bit_len_to_block_num(size_t length) noexcept nogil
+
+
+"""Returns the number of 64-bit blocks needed to store the specified length of nucleotides."""
+cdef size_t _nt_len_to_block_num(size_t length) noexcept nogil

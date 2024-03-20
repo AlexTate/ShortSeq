@@ -6,8 +6,6 @@ from libc.math cimport ceil, floor
 # This is a function pointer typedef for _factory_* methods
 # This allows us to use dynamic dispatch in C space rather than slow Python
 ctypedef object (*factory_method)(UMIFactory self, char* read, uint8_t length)
-ctypedef uint64_t* llstr
-ctypedef uint32_t* istr
 
 cdef class UMIFactory:
     cdef factory_method _factory

@@ -31,23 +31,6 @@ MAX_64_NT = 32
 def get_domain_64(): return MIN_64_NT, MAX_64_NT
 
 cdef class ShortSeq64:
-    # Todo: decide whether to standardize or remove (esp. setter...)
-
-    @property
-    def _length(self) -> uint8_t:
-        return self._length
-
-    @_length.setter
-    def _length(self, uint8_t val):
-        self._length = val
-
-    @property
-    def _packed(self) -> uint64_t:
-        return self._packed
-
-    @_packed.setter
-    def _packed(self, val):
-        self._packed = val
 
     def __hash__(self) -> uint64_t:
         return self._packed
@@ -75,19 +58,26 @@ cdef class ShortSeq64:
                 raise Exception("Slice error")
             if step != 1:
                 raise TypeError("Slice step not supported")
-            return _unmarshall_bytes_64(self._packed >> (start * 2), slice_len)
+            if slice_len == 0:
+                return empty
+            elif slice_len == 1:
+                return _subscript_64(self._packed, start)
+
+            return _slice_64(self._packed, start, slice_len)
         elif isinstance(item, int):
             index = item
             if index < 0: index += self._length
             if index < 0 or index >= self._length:
                 raise IndexError("Sequence index out of range")
-            return _unmarshall_bytes_64(self._packed >> (index * 2), 1)
+
+            return _subscript_64(self._packed, index)
         else:
             raise TypeError(f"Invalid index type: {type(item)}")
 
     def __xor__(self, ShortSeq64 other):
         if self._length != other._length:
-            raise Exception("Hamming distance requires sequences of equal length")
+            raise Exception(f"Hamming distance requires sequences of equal length "
+                            f"({self._length} != {other._length})")
 
         cdef uint64_t comp = self._packed ^ (<ShortSeq64>other)._packed
         comp = ((comp >> 1) | comp) & 0x5555555555555555LL  # Some bases XOR to 0x3; collapse these inplace to 0x1
@@ -117,6 +107,7 @@ cdef inline uint64_t _marshall_bytes_64(uint8_t* sequence, uint8_t length) nogil
 
     return hashed
 
+
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.boundscheck(False)
@@ -124,7 +115,19 @@ cdef inline unicode _unmarshall_bytes_64(uint64_t enc_seq, size_t length):
     cdef uint8_t i
 
     for i in range(length):
-        out_ascii_buffer_32[i] = charmap[enc_seq & mask]
+        out_ascii_buffer_32[i] = charmap[enc_seq & 0b11]
         enc_seq >>= 2
 
     return PyUnicode_DecodeASCII(out_ascii_buffer_32, length, NULL)
+
+
+cdef inline ShortSeq64 _subscript_64(uint64_t enc_seq, size_t index):
+    """Returns a new ShortSeq64 object representing a single base."""
+
+    return _subscript(enc_seq, index * 2)
+
+
+cdef inline object _slice_64(uint64_t enc_seq, uint8_t start, uint8_t slice_len):
+    """Returns a new ShortSeq64 object representing a slice of the encoded sequence."""
+
+    return _slice(&enc_seq, start * 2, slice_len)

@@ -1,3 +1,5 @@
+import os
+
 from setuptools import setup, find_namespace_packages, Extension
 from Cython.Build import cythonize
 
@@ -10,41 +12,39 @@ PLATFORM = 'Unix'
 REQUIRES_PYTHON = '>3.8, <3.12'
 VERSION = '0.0.1'
 
-
+define_macros = []
 short_seq_common_compile_args = [
     '-std=c++20',
     "-O3",
-    '-march=native']
+    "-mbmi2",
+    "-mpopcnt",
+    "-mtune=native",
+    '-march=native',
+]
+
+cython_implementations = [
+    "shortseq/short_seq.pyx",
+    "shortseq/short_seq_var.pyx",
+    "shortseq/short_seq_128.pyx",
+    "shortseq/short_seq_64.pyx",
+    "shortseq/fast_read.pyx",
+    "shortseq/counter.pyx",
+    "shortseq/util.pyx",
+    "shortseq/umi/umi.pyx",
+]
+
+if os.environ.get("CYTRACE") == '1':
+    define_macros.append(('CYTHON_TRACE_NOGIL', '1'))
 
 extensions = [
-    Extension("shortseq.short_seq",
-              sources=['shortseq/short_seq.pyx'],
-              extra_compile_args=short_seq_common_compile_args,
-              language='c++'),
-    Extension("shortseq.short_seq_var",
-              sources=['shortseq/short_seq_var.pyx'],
-              extra_compile_args=short_seq_common_compile_args,
-              language='c++'),
-    Extension("shortseq.short_seq_128",
-              sources=['shortseq/short_seq_128.pyx'],
-              extra_compile_args=short_seq_common_compile_args,
-              language='c++'),
-    Extension("shortseq.short_seq_64",
-              sources=['shortseq/short_seq_64.pyx'],
-              extra_compile_args=short_seq_common_compile_args,
-              language='c++'),
-    Extension("shortseq.util",
-              sources=['shortseq/util.pyx'],
-              extra_compile_args=short_seq_common_compile_args,
-              language='c++'),
-    Extension("shortseq.fast_read",
-              sources=['shortseq/fast_read.pyx'],
-              extra_compile_args=short_seq_common_compile_args,
-              language='c++'),
-    Extension("shortseq.umi.umi",
-              sources=['shortseq/umi/umi.pyx'],
-              extra_compile_args=short_seq_common_compile_args,
-              language='c++'),
+    Extension(
+        pyx.replace("/", ".").replace(".pyx", ""),
+        sources=[pyx],
+        extra_compile_args=short_seq_common_compile_args,
+        define_macros=define_macros,
+        language='c++',
+    )
+    for pyx in cython_implementations
 ]
 
 setup(
