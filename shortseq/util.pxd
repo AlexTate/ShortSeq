@@ -62,7 +62,7 @@ cdef extern from "x86intrin.h" nogil:
 
 """
 A little bit of hackery to allow fast access to the packed hash field of both
-ShortSeq64 and ShortSeq128, since inheritance and virtual function emulation
+ShortSeq64 and ShortSeq192, since inheritance and virtual function emulation
 come with a heavy cost in Cython.
 """
 ctypedef struct ShortSeqGeneric:

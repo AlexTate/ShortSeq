@@ -4,7 +4,7 @@ from cpython.unicode cimport PyUnicode_DATA, PyUnicode_GET_LENGTH, PyUnicode_Che
 from libc.string cimport memcpy
 
 from .short_seq_var cimport *
-from .short_seq_128 cimport *
+from .short_seq_192 cimport *
 from .short_seq_64 cimport *
 from .util cimport *
 

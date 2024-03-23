@@ -7,7 +7,7 @@ from libcpp.vector cimport vector
 
 from .short_seq cimport _from_chars, _from_py_bytes
 from .short_seq_64 cimport ShortSeq64
-from .short_seq_128 cimport ShortSeq128
+from .short_seq_192 cimport ShortSeq192
 from .short_seq_var cimport ShortSeqVar
 from .fast_read cimport *
 from .util cimport *
