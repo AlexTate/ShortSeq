@@ -73,3 +73,46 @@ for nb in alpha + numeric + special:
     bloom |= 1 << (nb & 63)
 """
 cdef uint64_t bloom = 0xFFFFFFFFFFEFFF75
+
+
+@cython.wraparound(False)
+@cython.cdivision(True)
+@cython.boundscheck(False)
+cdef inline uint64_t _marshall_full_block(uint8_t* sequence) nogil:
+    """Encodes 32 nucleotides into a uint64_t block efficiently."""
+
+    cdef:
+        uint64_t * chunk_iter = reinterpret_cast[llstr](sequence)
+        uint64_t block = 0ULL
+        char * nonbase_ptr
+        uint8_t i
+
+    for i in reversed(range(4)):
+        chunk = chunk_iter[i]
+        if not _bloom_filter_64(chunk):
+            nonbase_ptr = reinterpret_cast[cstr](&chunk)
+            raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 8, NULL)}")
+        block = (block << 16) | _pext_u64(chunk, pext_mask_64)
+
+    return block
+
+
+@cython.wraparound(False)
+@cython.cdivision(True)
+@cython.boundscheck(False)
+cdef inline uint64_t _marshall_partial_block(uint8_t * sequence, size_t length) nogil:
+    """Encodes less than 32 nucleotides into a uint64_t block."""
+
+    cdef:
+        uint64_t block = 0ULL
+        char * nonbase_ptr
+        uint8_t i
+
+    for i in reversed(range(length)):
+        seq_char = sequence[i]
+        if not is_base(seq_char):
+            nonbase_ptr = reinterpret_cast[cstr](&seq_char)
+            raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 1, NULL)}")
+        block = (block << 2) | table_91[seq_char]
+
+    return block
