@@ -74,7 +74,7 @@ However, AMD processors [prior to Zen 3](https://en.wikipedia.org/wiki/X86_Bit_m
   <img src="doc/plots/mem_by_length.svg" alt="Memory usage by length"/>
 </p>
 
-Note that the measurement of Gzip Bytes is the _length_ in bytes of the compressed sequence at maximum compression (level 9), which is much smaller than the actual PyBytes object that `gzip.compress()` returns. This footprint is therefore unattainable when using Python's gzip module, and instead serves as a theoretical lower bound for the memory footprint of a compressed sequence.
+Note that the measurement of Gzip Bytes is the _length_ in bytes of the compressed sequence at maximum compression (level 9), which is much smaller than the actual PyBytes object returned by `gzip.compress()`. This footprint is therefore unattainable when using Python's gzip module, and instead serves as a theoretical lower bound for the memory footprint of a compressed sequence.
 
 [View source: MemoryBenchmarks.test_mem_by_length()](shortseq/tests/benchmark.py#L44)
 </br></br>
@@ -92,7 +92,7 @@ Edit distance calculation is extremely efficient for ShortSeqs and can be perfor
   <img src="doc/plots/from_bytes_time.svg" alt="Construction time from PyBytes input"/>
 </p>
 
-ShortSeq construction involves encoding the sequence string into a compressed binary representation, which is an O(n) operation, whereas `x.decode()` and `np.char.asarray()` are O(1) because they essentially copy the object's internal buffer.
+This benchmark is very generous towards the competition because no attempt is made to check for non-nucleotide characters, whereas ShortSeq uses a bloom filter to do so for all inputs. ShortSeq construction involves encoding the sequence string into a compressed binary representation, which is an O(n) operation, whereas `x.decode()` and `np.char.asarray()` are O(1) because they essentially copy the object's internal buffer.
 
 [View source: TimeBenchmarks.test_construction_from_bytes()](shortseq/tests/benchmark.py#L84)
 </br></br>
