@@ -73,3 +73,68 @@ for nb in alpha + numeric + special:
     bloom |= 1 << (nb & 63)
 """
 cdef uint64_t bloom = 0xFFFFFFFFFFEFFF75
+
+
+cdef inline void _marshall_bytes_array(uint64_t* dst, uint8_t* src, size_t length) nogil:
+    """Encodes a sequence of nucleotides into an existing array of uint64_t blocks.
+    
+    Args:
+        dst: The destination uint64_t array.
+        src: The source sequence string as uint8_t* bytes.
+        length: The number of nucleotides to encode.
+    """
+
+    cdef size_t full_blocks, rem
+    full_blocks, rem = _divmod(length, NT_PER_BLOCK)
+
+    _marshall_full_blocks(dst, src, full_blocks)
+
+    if rem:
+        src += 32 * full_blocks
+        dst[full_blocks] = _marshall_partial_block(src, rem)
+
+
+@cython.wraparound(False)
+@cython.cdivision(True)
+@cython.boundscheck(False)
+cdef inline void _marshall_full_blocks(uint64_t* dst, uint8_t* sequence, size_t n_blocks) nogil:
+    """Encodes n_blocks of 32 nucleotides into the destination uint64_t array."""
+
+    cdef:
+        uint64_t * chunk_iter = reinterpret_cast[llstr](sequence)
+        cdef char* nonbase_ptr
+        uint64_t block
+        size_t i, j
+
+    for i in range(n_blocks):
+        block = 0ULL
+        for j in reversed(range(4)):
+            chunk = chunk_iter[j]
+            if not _bloom_filter_64(chunk):
+                nonbase_ptr = reinterpret_cast[cstr](&chunk)
+                raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 8, NULL)}")
+            block = (block << 16) | _pext_u64(chunk, pext_mask_64)
+
+        dst[i] = block
+        chunk_iter += 4
+
+
+@cython.wraparound(False)
+@cython.cdivision(True)
+@cython.boundscheck(False)
+cdef inline uint64_t _marshall_partial_block(uint8_t * sequence, size_t length) nogil:
+    """Encodes less than 32 nucleotides into a uint64_t block."""
+
+    cdef:
+        uint64_t block = 0ULL
+        char * nonbase_ptr
+        uint8_t i
+
+    for i in reversed(range(length)):
+        seq_char = sequence[i]
+        if not is_base(seq_char):
+            nonbase_ptr = reinterpret_cast[cstr](&seq_char)
+            raise Exception(f"Unsupported base character: {PyUnicode_DecodeASCII(nonbase_ptr, 1, NULL)}")
+        block = (block << 2) | table_91[seq_char]
+
+    return block

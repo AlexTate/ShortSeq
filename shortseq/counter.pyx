@@ -15,7 +15,7 @@ cdef class ShortSeqCounter(dict):
             self._count_py_bytes_list(source)
 
     def __setitem__(self, key, val):
-        if type(key) not in (ShortSeq64, ShortSeq128, ShortSeqVar):
+        if type(key) not in (ShortSeq64, ShortSeq192, ShortSeqVar):
             raise TypeError(f"{self.__class__} does not support {type(key)} keys")
         PyDict_SetItem(self, key, val)
 

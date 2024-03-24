@@ -25,7 +25,7 @@ short_seq_common_compile_args = [
 cython_implementations = [
     "shortseq/short_seq.pyx",
     "shortseq/short_seq_var.pyx",
-    "shortseq/short_seq_128.pyx",
+    "shortseq/short_seq_192.pyx",
     "shortseq/short_seq_64.pyx",
     "shortseq/fast_read.pyx",
     "shortseq/counter.pyx",

@@ -62,7 +62,7 @@ cdef extern from "x86intrin.h" nogil:
 
 """
 A little bit of hackery to allow fast access to the packed hash field of both
-ShortSeq64 and ShortSeq128, since inheritance and virtual function emulation
+ShortSeq64 and ShortSeq192, since inheritance and virtual function emulation
 come with a heavy cost in Cython.
 """
 ctypedef struct ShortSeqGeneric:
@@ -157,3 +157,15 @@ cdef size_t _bit_len_to_block_num(size_t length) noexcept nogil
 
 """Returns the number of 64-bit blocks needed to store the specified length of nucleotides."""
 cdef size_t _nt_len_to_block_num(size_t length) noexcept nogil
+
+
+"""Encodes a sequence of nucleotides into an existing array of uint64_t blocks."""
+cdef void _marshall_bytes_array(uint64_t* out, uint8_t* sequence, size_t length) nogil
+
+
+"""Encodes n_blocks of 32 nucleotides into the destination uint64_t array."""
+cdef void _marshall_full_blocks(uint64_t* dst, uint8_t* sequence, size_t n_blocks) nogil
+
+
+"""Encodes less than 32 nucleotides into a uint64_t block."""
+cdef uint64_t _marshall_partial_block(uint8_t * sequence, size_t length) nogil

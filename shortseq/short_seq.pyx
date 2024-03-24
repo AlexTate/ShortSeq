@@ -20,7 +20,7 @@ cpdef pack(object seq):
         else: return _from_py_bytes(seq)
     elif type(seq) is ShortSeq64:
         return seq
-    elif type(seq) is ShortSeq128:
+    elif type(seq) is ShortSeq192:
         return seq
     elif type(seq) is ShortSeqVar:
         return seq
@@ -60,11 +60,11 @@ cdef inline object _new(char* sequence, size_t length):
         (<ShortSeq64> out64)._packed = _marshall_bytes_64(<uint8_t *> sequence, length)
         (<ShortSeq64> out64)._length = length
         return out64
-    elif length <= MAX_128_NT:
-        out128 = ShortSeq128.__new__(ShortSeq128)
+    elif length <= MAX_192_NT:
+        out192 = ShortSeq192.__new__(ShortSeq192)
         length = <uint8_t> length
-        _marshall_bytes_128(<ShortSeq128>out128, <uint8_t *> sequence, <uint8_t>length)
-        return out128
+        _marshall_bytes_192(<ShortSeq192>out192, <uint8_t *> sequence, <uint8_t>length)
+        return out192
     elif length <= MAX_VAR_NT:
         outvar = ShortSeqVar.__new__(ShortSeqVar)
         (<ShortSeqVar> outvar)._packed = _marshall_bytes_var(<uint8_t *> sequence, length)
@@ -108,8 +108,8 @@ cdef inline object _slice(uint64_t* packed, size_t offset, size_t slice_len_nts)
 
     if slice_len_nts <= MAX_64_NT:
         return _slice_to_ShortSeq64(packed, offset, slice_len_nts)
-    elif slice_len_nts <= MAX_128_NT:
-        return _slice_to_ShortSeq128(packed, offset, slice_len_nts)
+    elif slice_len_nts <= MAX_192_NT:
+        return _slice_to_ShortSeq192(packed, offset, slice_len_nts)
     elif slice_len_nts <= MAX_VAR_NT:
         return _slice_to_ShortSeqVar(packed, offset, slice_len_nts)
     else:
@@ -144,8 +144,8 @@ cdef ShortSeq64 _slice_to_ShortSeq64(uint64_t* packed, size_t offset, size_t sli
     return out64
 
 
-cdef ShortSeq128 _slice_to_ShortSeq128(uint64_t* packed, size_t offset, size_t slice_len_nts):
-    """Constructs a new ShortSeq128 object from a bit-packed sequence slice.
+cdef ShortSeq192 _slice_to_ShortSeq192(uint64_t* packed, size_t offset, size_t slice_len_nts):
+    """Constructs a new ShortSeq192 object from a bit-packed sequence slice.
     
     Args:
         packed: A pointer to the block in the bit-packed sequence
@@ -157,15 +157,15 @@ cdef ShortSeq128 _slice_to_ShortSeq128(uint64_t* packed, size_t offset, size_t s
     """
 
     cdef:
-        ShortSeq128 out128 = ShortSeq128.__new__(ShortSeq128)
+        ShortSeq192 out192 = ShortSeq192.__new__(ShortSeq192)
         size_t slice_len_bits = slice_len_nts * 2
         cdef uint64_t* result
 
-    result = reinterpret_cast[llstr](&out128._packed)
+    result = reinterpret_cast[llstr](&out192._packed)
     _shift_copy_trim(result, packed, slice_len_bits, offset)
 
-    out128._length = <uint8_t> slice_len_nts
-    return out128
+    out192._length = <uint8_t> slice_len_nts
+    return out192
 
 cdef ShortSeqVar _slice_to_ShortSeqVar(uint64_t* packed, size_t offset, size_t slice_len_nts):
     """Constructs a new ShortSeqVar object from a bit-packed sequence slice.
