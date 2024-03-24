@@ -111,16 +111,8 @@ cdef inline void _marshall_bytes_192(ShortSeq192 out, uint8_t* sequence, uint8_t
     """Note that unlike the other _marshall_bytes_* functions, this one does not return a value. 
     Instead, it adds the packed sequence and length to the provided ShortSeq192 instance."""
 
-    cdef size_t full_blocks, rem
-    full_blocks, rem = _divmod(length, NT_PER_BLOCK)
+    _marshall_bytes_array(out._packed, sequence, length)
     out._length = length
-
-    for i in range(full_blocks):
-        out._packed[i] = _marshall_full_block(sequence)
-        sequence += 32
-
-    if rem:
-        out._packed[full_blocks] = _marshall_partial_block(sequence, rem)
 
 
 @cython.wraparound(False)
