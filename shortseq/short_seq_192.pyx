@@ -3,25 +3,18 @@
 cimport cython
 
 """ MEASURED ON PYTHON 3.10
-ShortSeq192: packs sequences up to 64 bases in length
+ShortSeq192: packs sequences up to 96 bases in length
 into fixed-size objects using 2-bit encoding. For sequences
 32 bases or less, ShortSeq64 is more efficient.
 
-Max compression (64 base sequence):
-    Memory footprint: 40 bytes
-    PyBytes equivalent: 104 bytes (62% reduction)
-    PyUnicode equivalent: 120 bytes (67% reduction)
+Max compression (96 base sequence):
+    Memory footprint: 48 bytes
+    PyBytes equivalent: 136 bytes (65% reduction)
+    PyUnicode equivalent: 152 bytes (68% reduction)
 Min compression (33 base sequence):
     Memory footprint: 40 bytes
     PyBytes equivalent: 72 bytes (44% reduction)
     PyUnicode Equivalent: 88 bytes (55% reduction)
-
-Alternatively,
-Consider encoding length into lower 6 bits (representing up to 63):
-    Max sequence length: 61 bases
-    Memory footprint: 40 bytes
-    PyBytes equivalent: 96 bytes (58% reduction)
-    PyUnicode equivalent: 112 bytes (64% reduction)
 """
 
 # Constants
